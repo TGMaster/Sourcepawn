@@ -6,6 +6,7 @@
 #include <l4d2util>
 #undef REQUIRE_PLUGIN
 #include <readyup>
+
 #include <colors>
 
 public Plugin:myinfo =
