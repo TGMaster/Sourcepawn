@@ -1730,7 +1730,7 @@ AddPlayerItems(Handle:menu, client) {
 				GetClientIP(vtargets[i], steamid, sizeof(steamid));
 				Format(playerid, sizeof(playerid), "#%s", steamid);
 			} else {
-				GetClientAuthString(vtargets[i], steamid, sizeof(steamid));
+				GetClientAuthId(vtargets[i], AuthId_Steam2, steamid, sizeof(steamid));
 				Format(playerid, sizeof(playerid), "#%s", steamid);
 			}
 			GetClientName(vtargets[i], playername, sizeof(playername));
@@ -1746,7 +1746,7 @@ AddDisconnectedPlayers(Handle:menu, const String:votename[], pidx) {
 	new String:steamid[32];
 	for (new i = 1; i <= maxc; ++i) {
 		if (IsClientConnected(i) && !IsFakeClient(i)) {
-			GetClientAuthString(i, steamid, sizeof(steamid));
+			GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
 			Format(steamids[sidx++], 32, "#%s", steamid);
 		}
 	}
