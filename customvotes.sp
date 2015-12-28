@@ -158,11 +158,11 @@ public OnPluginStart() {
 	LoadTranslations("customvotes.phrases");
 
 	CreateConVar("sm_cvote_version", PLUGIN_VERSION, "Custom votes version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
-	sm_cvote_showstatus = CreateConVar("sm_cvote_showstatus", "1", "Show vote status. 0 = none, 1 = in side panel anonymously, 2 = in chat anonymously, 3 = in chat with player names.", FCVAR_PLUGIN);
+	sm_cvote_showstatus = CreateConVar("sm_cvote_showstatus", "3", "Show vote status. 0 = none, 1 = in side panel anonymously, 2 = in chat anonymously, 3 = in chat with player names.", FCVAR_PLUGIN);
 	sm_cvote_resetonmapchange = CreateConVar("sm_cvote_resetonmapchange", "0", "Reset all votes on map change.", FCVAR_PLUGIN);
 	sm_cvote_triggers = CreateConVar("sm_cvote_triggers", "0", "Allow in-chat vote triggers.", FCVAR_PLUGIN);
 	sm_cvote_triggerdelay = CreateConVar("sm_cvote_triggerdelay", "30", "Default delay between non-admin initiated votes.", FCVAR_PLUGIN);
-	sm_cvote_executedelay = CreateConVar("sm_cvote_executedelay", "3.0", "Default delay before executing a command after a successful vote.", FCVAR_PLUGIN);
+	sm_cvote_executedelay = CreateConVar("sm_cvote_executedelay", "1.0", "Default delay before executing a command after a successful vote.", FCVAR_PLUGIN);
 	sm_cvote_mapdelay = CreateConVar("sm_cvote_mapdelay", "0", "Default delay after maps starts before players can initiate votes.", FCVAR_PLUGIN);
 	sm_cvote_minpercent = CreateConVar("sm_cvote_minpercent", "60", "Minimum percentage of votes the winner must receive to be considered the winner.", FCVAR_PLUGIN);
 	sm_cvote_minvotes = CreateConVar("sm_cvote_minvotes", "0", "Minimum number of votes the winner must receive to be considered the winner.", FCVAR_PLUGIN);
