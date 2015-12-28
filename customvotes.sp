@@ -15,8 +15,9 @@
 #undef REQUIRE_PLUGIN
 #include <adminmenu>
 #define REQUIRE_PLUGIN
+#include <colors>
 
-#define PLUGIN_VERSION "0.6b"
+#define PLUGIN_VERSION "0.1.2"
 #define INVALID_VOTE -1
 #define MAX_VOTES 64
 
@@ -143,11 +144,8 @@ new g_configParam = -1;
 new g_configParamsUsed = 0;
 new g_configVote[CVote];
 
-// GUI-related
-new Handle:g_voteGuiTimer = INVALID_HANDLE;
-
 public Plugin:myinfo = {
-	name = "Player Custom Votes",
+	name = "Player Menu Votes",
 	author = "chundo & Blazers Team",
 	description = "Allow addition of custom votes with configuration files",
 	version = PLUGIN_VERSION,
@@ -162,8 +160,8 @@ public OnPluginStart() {
 	CreateConVar("sm_cvote_version", PLUGIN_VERSION, "Custom votes version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	sm_cvote_showstatus = CreateConVar("sm_cvote_showstatus", "1", "Show vote status. 0 = none, 1 = in side panel anonymously, 2 = in chat anonymously, 3 = in chat with player names.", FCVAR_PLUGIN);
 	sm_cvote_resetonmapchange = CreateConVar("sm_cvote_resetonmapchange", "0", "Reset all votes on map change.", FCVAR_PLUGIN);
-	sm_cvote_triggers = CreateConVar("sm_cvote_triggers", "1", "Allow in-chat vote triggers.", FCVAR_PLUGIN);
-	sm_cvote_triggerdelay = CreateConVar("sm_cvote_triggerdelay", "60", "Default delay between non-admin initiated votes.", FCVAR_PLUGIN);
+	sm_cvote_triggers = CreateConVar("sm_cvote_triggers", "0", "Allow in-chat vote triggers.", FCVAR_PLUGIN);
+	sm_cvote_triggerdelay = CreateConVar("sm_cvote_triggerdelay", "30", "Default delay between non-admin initiated votes.", FCVAR_PLUGIN);
 	sm_cvote_executedelay = CreateConVar("sm_cvote_executedelay", "3.0", "Default delay before executing a command after a successful vote.", FCVAR_PLUGIN);
 	sm_cvote_mapdelay = CreateConVar("sm_cvote_mapdelay", "0", "Default delay after maps starts before players can initiate votes.", FCVAR_PLUGIN);
 	sm_cvote_minpercent = CreateConVar("sm_cvote_minpercent", "60", "Minimum percentage of votes the winner must receive to be considered the winner.", FCVAR_PLUGIN);
@@ -175,9 +173,8 @@ public OnPluginStart() {
 	RegAdminCmd("sm_cvote_reload", Command_ReloadConfig, ADMFLAG_GENERIC, "Reload vote configuration", "customvotes", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_votemenu", Command_VoteMenu, "List available votes", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_cvs", Command_VoteMenu, "List available votes", FCVAR_PLUGIN);
-	RegConsoleCmd("Vote", Command_Vote, "Record a client vote", FCVAR_PLUGIN);
-	RegAdminCmd("sm_cancelvote", Command_CancelVote, ADMFLAG_GENERIC, "Cancel an vote in progress", FCVAR_PLUGIN);
-
+	
+	RegAdminCmd("sm_cancelvote", Command_CancelVote, ADMFLAG_GENERIC, "Cancel an vote in progress", "customvotes", FCVAR_PLUGIN);
 	RegAdminCmd("sm_ban_auto", Command_BanAuto, ADMFLAG_GENERIC, "Ban a user by Steam ID or IP (auto-detected)", "customvotes", FCVAR_PLUGIN);
 
 	// Loaded late, OnAdminMenuReady already fired
@@ -837,7 +834,7 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 			ReplaceParams(tnotice, sizeof(tnotice), vparams, vparamct, cvote[paramtypes], true);
 		}
 		ReplaceString(tnotice, sizeof(tnotice), "%u", playername);
-		PrintToChatAll("\x03[CustomVotes]\x01 %s [\x05%d/%d votes\x01]", tnotice, votect, tcount);
+		PrintToChatAll("\x03[CustomVotes]\x01 %s [%d/%d votes]", tnotice, votect, tcount);
 		if (votect < tcount)
 			return;
 	}
@@ -846,16 +843,8 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 	g_lastVoteTime = GetTime();
 	g_voteLastInitiated[voteidx] = g_lastVoteTime;
 
-	// Do a quick check for GUI-style confirmation vote support
-	new voteGuiSupported = false;
-	new Handle:voteevent = CreateEvent("vote_started");
-	if (voteevent != INVALID_HANDLE) {
-		voteGuiSupported = true;
-		CancelCreatedEvent(voteevent);
-	}
-
+	// Chat votes are a special case
 	if (cvote[type] == CVoteType_Chat) {
-		// Votes are recorded via chat commands
 		new votepct = RoundToCeil(FloatMul(FloatDiv(float(votect), float(players)), float(100)));
 		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Won The Vote", LANG_SERVER, votepct, votect);
 		LogAction(0, -1, "Vote succeeded with %d%% of the vote (%d votes)", votepct, votect);
@@ -868,25 +857,6 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 			WritePackString(strpack, execcommand);
 			CreateTimer(GetConVarFloat(sm_cvote_executedelay), Timer_ExecuteCommand, strpack);
 		}
-	} else if (cvote[type] == CVoteType_Confirm && voteGuiSupported) {
-		// Left4Dead-style GUI vote
-		g_activeVoteStatusIdx = statusidx;
-		GetArrayArray(g_voteStatus, g_activeVoteStatusIdx, g_activeVoteStatus[0]);
-
-		// Force targeting "@all" until we get better L4D team targeting
-		strcopy(cvote[target], sizeof(cvote[target]), "@all");
-
-		// Display vote panel
-		new Handle:msg = CreateEvent("vote_started");
-		SetEventString(msg, "issue", "#L4D_TargetID_Player");
-		SetEventString(msg, "param1", votetitle);
-		SetEventInt(msg, "team", 0);
-		SetEventInt(msg, "initiator", client);
-		FireEvent(msg);
-		CVote_UpdateConfirmGUI();
-
-		// Set a timeout for the vote
-		g_voteGuiTimer = CreateTimer(15.0, Timer_ConfirmGUI_VoteEnd);
 	} else {
 		g_activeVoteStatusIdx = statusidx;
 		GetArrayArray(g_voteStatus, g_activeVoteStatusIdx, g_activeVoteStatus[0]);
@@ -928,7 +898,7 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 		}
 
 		LogAction(client, -1, "%L initiated a %s vote", client, cvote[names]);
-		PrintToChatAll("\x03[CustomVotes]\x04 %s\x01called a custom votes.", client);
+		CPrintToChatAllEx(client, "{teamcolor}%N {default}called a custom vote.", client);
 		SetVoteResultCallback(vm, CVote_VoteHandler);
 		VoteMenu(vm, g_activeVoteStatus[targets], g_activeVoteStatus[targetct], 30);
 	}
@@ -1050,15 +1020,6 @@ public CVote_PanelHandler(Handle:menu, MenuAction:action, param1, param2) {
 }
 
 public CVote_VoteHandler(Handle:menu, num_votes, num_clients, const client_info[][2], num_items, const item_info[][2]) {
-	decl String:value[64];
-	decl String:description[128];
-	new style;
-	GetMenuItem(menu, item_info[0][VOTEINFO_ITEM_INDEX], value, sizeof(value), style, description, sizeof(description));
-	new winvotes = item_info[0][VOTEINFO_ITEM_VOTES];
-	CVote_ExecuteVoteResult(value, description, winvotes, num_votes, num_clients);
-}
-
-public bool:CVote_ExecuteVoteResult(const String:value[], const String:description[], win_votes, num_votes, num_clients) {
 	new cvote[CVote];
 	GetArrayArray(g_voteArray, g_activeVoteStatus[voteindex], cvote[0]);
 
@@ -1068,22 +1029,24 @@ public bool:CVote_ExecuteVoteResult(const String:value[], const String:descripti
 	ResetPack(g_activeVoteStatus[params]);
 
 	new String:execcommand[128] = "";
+	decl String:value[64];
+	decl String:description[128];
+	new style;
+	GetMenuItem(menu, item_info[0][VOTEINFO_ITEM_INDEX], value, sizeof(value), style, description, sizeof(description));
+
 	// See if top vote meets winning criteria
-	new winpercent = 0;
-	new playerpercent = 0;
-	if (win_votes > 0) {
-		winpercent = RoundToFloor(FloatMul(FloatDiv(float(win_votes), float(num_votes)), float(100)));
-		playerpercent = RoundToFloor(FloatMul(FloatDiv(float(win_votes), float(GetClientCount(true))), float(100)));
-	}
+	new winvotes = item_info[0][VOTEINFO_ITEM_VOTES];
+	new winpercent = RoundToFloor(FloatMul(FloatDiv(float(winvotes), float(num_votes)), float(100)));
+	new playerpercent = RoundToFloor(FloatMul(FloatDiv(float(winvotes), float(GetClientCount(true))), float(100)));
 	if (winpercent < cvote[percent]) {
 		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Not Enough Vote Percentage", LANG_SERVER, cvote[percent], winpercent);
 	} else if (playerpercent < cvote[abspercent]) {
 		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Not Enough Vote Percentage", LANG_SERVER, cvote[abspercent], playerpercent);
-	} else if (win_votes < cvote[votes]) {
-		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Not Enough Votes", LANG_SERVER, cvote[votes], win_votes);
+	} else if (winvotes < cvote[votes]) {
+		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Not Enough Votes", LANG_SERVER, cvote[votes], winvotes);
 	} else {
-		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Option Won The Vote", LANG_SERVER, description, winpercent, win_votes);
-		LogAction(0, -1, "\"%s\" (%s) won with %d%% of the vote (%d votes)", description, value, winpercent, win_votes);
+		PrintToChatAll("\x03[CustomVotes]\x01 %T", "Option Won The Vote", LANG_SERVER, description, winpercent, winvotes);
+		LogAction(0, -1, "\"%s\" (%s) won with %d%% of the vote (%d votes)", description, value, winpercent, winvotes);
 		// Don't need to take action if a confirmation vote was shot down
 		if (cvote[type] != CVoteType_Confirm || strcmp(value, "1") == 0) {
 			strcopy(vparams[g_activeVoteStatus[paramct]++], 64, value);
@@ -1120,11 +1083,9 @@ public bool:CVote_ExecuteVoteResult(const String:value[], const String:descripti
 					CVote_ConfirmVote(vtargets, vtargetct, execcommand, description);
 				}
 			}
-			return true;
 		}
 	}
 	ClearCurrentVote();
-	return false;
 }
 
 CVote_ConfirmVote(vtargets[], vtargetct, const String:execcommand[], const String:description[]) {
@@ -1384,10 +1345,9 @@ stock GetParamCount(const String:expr[]) {
 	return max;
 }
 
-stock IndexOf(const String:str[], chars, offset=-1) {
-	for (new i = offset + 1; i < strlen(str); ++i)
-		if (str[i] == chars)
-			return i;
+stock IndexOf(const String:str[], character, offset=-1) 
+{
+	for (new i = offset + 1; i < strlen(str); ++i) {if (str[i] == character) return i;}
 	return -1;
 }
 
@@ -1424,7 +1384,7 @@ stock PrintVotesToMenu(client) {
 	new voteparamct = 0;
 
 	new Handle:menu = CreateMenu(CVote_VoteListMenuHandler);
-	SetMenuTitle(menu, "%T:", "Player Custom Votes", LANG_SERVER);
+	SetMenuTitle(menu, "%T:", "Available Votes", LANG_SERVER);
 
 	for (new i = 0; i < s; ++i) {
 		GetArrayArray(g_voteArray, i, tvote[0]);
@@ -1504,7 +1464,7 @@ stock PrintVotesToConsole(client) {
 	new s = GetArraySize(g_voteArray);
 	new tvote[CVote];
 	new String:votetitle[128];
-	PrintToConsole(client, "Player Custom Votes:");
+	PrintToConsole(client, "Available votes:");
 	for (new i = 0; i < s; ++i) {
 		GetArrayArray(g_voteArray, i, tvote[0]);
 		if (client == 0 || CanInitiateVote(client, tvote[admin])) {
@@ -1687,129 +1647,18 @@ CheckClientTarget(const String:targetstr[], client, bool:nomulti) {
 	return vtargetct > 0;
 }
 
-/*****************************************************************
- ** LEFT 4 DEAD VOTING METHOD                                   **
- *****************************************************************/
-
-public Action:Command_Vote(client, args) {
-	if (g_activeVoteStatusIdx > -1 && client > 0) {
-		if (args > 0) {
-			new String:votevalue[24];
-			new votecode = -1;
-			GetCmdArg(1, votevalue, sizeof(votevalue));
-			if (strcmp(votevalue, "Yes", false) == 0)
-				votecode = 1;
-			else if (strcmp(votevalue, "No", false) == 0)
-				votecode = 0;
-			g_activeVoteStatus[clientvotes][client] = votecode;
-			CVote_UpdateConfirmGUI();
-		} else {
-			ReplyToCommand(client, "Please specify a valid vote.");
-		}
-	}
-	return Plugin_Continue;
-}
-
 public Action:Command_CancelVote(client, args) {
 	if (g_activeVoteStatusIdx > -1) {
 		new cvote[CVote];
 		GetArrayArray(g_voteArray, g_activeVoteStatus[voteindex], cvote[0]);
-		if (cvote[type] == CVoteType_Confirm && g_voteGuiTimer != INVALID_HANDLE) {
-			KillTimer(g_voteGuiTimer);
-			g_voteGuiTimer = INVALID_HANDLE;
+		if (cvote[type] == CVoteType_Confirm) {
 			ClearCurrentVote();
-			new Handle:vevent = CreateEvent("vote_ended");
-			FireEvent(vevent);
+			LogAction(client, -1, "%L cancelled the %s vote", client, cvote[names]);
 			ShowActivity(client, "%t", "Cancelled Vote");
 			return Plugin_Handled;
 		}
 	}
 	return Plugin_Continue;
-}
-
-public Action:Timer_ConfirmGUI_VoteEnd(Handle:timer, any:param) {
-	g_voteGuiTimer = INVALID_HANDLE;
-	CVote_ConfirmGUI_VoteEnd();
-}
-
-CVote_ConfirmGUI_VoteEnd() {
-	if (g_activeVoteStatusIdx > -1) {
-		new cvote[CVote];
-		GetArrayArray(g_voteArray, g_activeVoteStatus[voteindex], cvote[0]);
-		if (cvote[type] == CVoteType_Confirm) {
-			new String:vparams[10][64];
-			for (new i = 0; i < g_activeVoteStatus[paramct]; ++i)
-				ReadPackString(g_activeVoteStatus[params], vparams[i], 64);
-			ResetPack(g_activeVoteStatus[params]);
-			new String:votetitle[128];
-			ProcessTemplateString(votetitle, sizeof(votetitle), cvote[title]);
-			ReplaceParams(votetitle, sizeof(votetitle), vparams, g_activeVoteStatus[paramct], cvote[paramtypes], true);
-
-			ClearCurrentVote();
-			new Handle:vevent = CreateEvent("vote_ended");
-			FireEvent(vevent);
-
-			new maxc = GetMaxClients();
-			new yes_votes = 0;
-			new no_votes = 0;
-			for (new i = 1; i <= maxc; ++i) {
-				if (g_activeVoteStatus[clientvotes][i] == 0)
-					no_votes++;
-				else if (g_activeVoteStatus[clientvotes][i] == 1)
-					yes_votes++;
-			}
-			// Execute command
-			new winvotes = no_votes;
-			new String:votevalue[10] = "0";
-			new String:votedesc[24] = "No";
-			if (yes_votes > no_votes) {
-				winvotes = yes_votes;
-				strcopy(votevalue, sizeof(votevalue), "1");
-				strcopy(votedesc, sizeof(votedesc), "Yes");
-			}
-			if (CVote_ExecuteVoteResult(votevalue, votedesc, winvotes, yes_votes+no_votes, GetClientCount(true))) {
-				new Handle:msg = CreateEvent("vote_passed");
-				SetEventString(msg, "details", "#L4D_TargetID_Player");
-				SetEventString(msg, "param1", votetitle);
-				SetEventInt(msg,"team", 0);
-				FireEvent(msg);
-			} else {
-				new Handle:msg = CreateEvent("vote_failed");
-				SetEventInt(msg,"team", 0);
-				FireEvent(msg);
-			}
-		}
-	}
-}
-
-CVote_UpdateConfirmGUI() {
-	new cvote[CVote];
-	GetArrayArray(g_voteArray, g_activeVoteStatus[voteindex], cvote[0]);
-
-	new maxc = GetMaxClients();
-	new yes_votes = 0;
-	new no_votes = 0;
-	for (new i = 1; i <= maxc; ++i) {
-		if (g_activeVoteStatus[clientvotes][i] == 1)
-			yes_votes++;
-		else if (g_activeVoteStatus[clientvotes][i] == 0)
-			no_votes++;
-	}
-
-	new Handle:msg = CreateEvent("vote_changed");
-	SetEventInt(msg, "yesVotes", yes_votes);
-	SetEventInt(msg, "noVotes", no_votes);
-	SetEventInt(msg, "potentialVotes", GetClientCount(true));
-	FireEvent(msg);
-
-	if ((yes_votes + no_votes) == GetClientCount(true)) {
-		if (g_voteGuiTimer != INVALID_HANDLE) {
-			KillTimer(g_voteGuiTimer);
-			g_voteGuiTimer = INVALID_HANDLE;
-		}
-		//g_voteGuiTimer = CreateTimer(2.0, Timer_ConfirmGUI_VoteEnd);
-		CVote_ConfirmGUI_VoteEnd();
-	}
 }
 
 /*****************************************************************
@@ -1944,3 +1793,17 @@ public SMCResult:gtKeyValue(Handle:parser, const String:key[], const String:valu
 }
 public SMCResult:gtNewSection(Handle:parser, const String:section[], bool:quotes) {}
 public SMCResult:gtEndSection(Handle:parser) {}
+
+// DEBUG - DELETE ME
+stock Action:Command_AddAdmin(client, args) {
+	new tct = 0;
+	new bool:ml = false;
+	new maxc = GetMaxClients();
+	new t[maxc];
+	new String:td[32];
+	new String:ts[32];
+	GetCmdArg(1, ts, sizeof(ts));
+	tct = ProcessTargetString(ts, 0, t, maxc, 0, td, sizeof(td), ml);
+	for (new i = 0; i < tct; ++i)
+		SetUserFlagBits(t[i], ADMFLAG_GENERIC);
+}
