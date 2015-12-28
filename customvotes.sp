@@ -742,7 +742,8 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 					ResetPack(cvote[paramdata][vparamct]);
 				}
 			}
-			if (GetMenuItemCount(parammenu) > 0 && parammenu != INVALID_HANDLE) {
+			
+			if (GetMenuItemCount(parammenu) > 0 && parammenu != INVALID_HANDLE && GetClientTeam(client) != 1) {
 				if (g_adminMenuHandle != INVALID_HANDLE)
 					SetMenuExitBackButton(parammenu, true);
 				DisplayMenu(parammenu, client, 30);
@@ -1432,7 +1433,7 @@ stock PrintVotesToMenu(client) {
 		}
 	}
 
-	if (GetMenuItemCount(menu) > 0)
+	if (GetMenuItemCount(menu) > 0 && GetClientTeam(client) != 1)
 		DisplayMenu(menu, client, 30);
 }
 
