@@ -1304,7 +1304,7 @@ public Action:SendMenuToClient(Handle:timer, any:client)
 
 public Action:VoteMenuDraw(iClient)
 {
-	if(iClient < 0 || !IsClientInGame(iClient) || IsFakeClient(iClient) || GetClientTeam(iClient) != 1)
+	if(iClient < 0 || !IsClientInGame(iClient) || IsFakeClient(iClient))
 		return Plugin_Handled;
 	
 	//Create the menu
