@@ -187,14 +187,12 @@ public Action:VoteAction(client, const String:command[], argc)
 		GetCmdArg(1, vote, sizeof(vote));
 		if(StrEqual(vote, "yes", false))
 		{
-			PrintToChatAll("%s chose yes", client);
 			iVote[client] = Voted_Yes;
 			VoteManagerUpdateVote();
 			return Plugin_Continue;
 		}
 		else if(StrEqual(vote, "no", false))
 		{
-			PrintToChatAll("%s chose no", client);
 			iVote[client] = Voted_No;
 			VoteManagerUpdateVote();
 			return Plugin_Continue;
