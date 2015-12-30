@@ -946,13 +946,14 @@ public CVote_MenuHandler(Handle:menu, MenuAction:action, param1, param2) {
 			}
 			case 2: {
 				for (new i = 0; i < g_activeVoteStatus[targetct]; ++i)
-					PrintToChat(g_activeVoteStatus[targets][i], "[SM] %t", "Vote Select Anonymous", itemname);
+					PrintToChat(g_activeVoteStatus[targets][i], "[Vote] %t", "Vote Select Anonymous", itemname);
 			}
 			case 3: {
 				new String:playername[64] = "";
 				GetClientName(param1, playername, sizeof(playername));
 				for (new i = 0; i < g_activeVoteStatus[targetct]; ++i)
-					PrintToChat(g_activeVoteStatus[targets][i], "[SM] %t", "Vote Select", playername, itemname);
+					if (IsClientInGame(g_activeVoteStatus[targets][i]) && !IsFakeClient(g_activeVoteStatus[targets][i])
+						PrintToChat(g_activeVoteStatus[targets][i], "[Vote] %t", "Vote Select", playername, itemname);
 			}
 		}
 	}
