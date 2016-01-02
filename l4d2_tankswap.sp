@@ -261,10 +261,12 @@ public TS_MenuCallBack(Handle:menu, MenuAction:action, param1, param2)
 
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (GetClientTeam(i) == 3)
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed randomly to \x04%N", choice);
-			else
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i)) {
+				if (GetClientTeam(i) == 3)
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed randomly to \x04%N", choice);
+				else
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			}
 		}
 		DebugPrintToAll("Tank Control was surrendered randomly to: %N", choice);
     }
@@ -278,10 +280,12 @@ public TS_MenuCallBack(Handle:menu, MenuAction:action, param1, param2)
         
         for (new i = 1; i <= MaxClients; i++)
 		{
-			if (GetClientTeam(i) == 3)
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed to \x04%N", choice);
-			else
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i)) {
+				if (GetClientTeam(i) == 3)
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed to \x04%N", choice);
+				else
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			}
 		}
         DebugPrintToAll("Tank Control was surrendered to: %N", choice);
     }
@@ -380,10 +384,12 @@ public TS_Auto_MenuCallBack(Handle:menu, MenuAction:action, param1, param2)
         
         for (new i = 1; i <= MaxClients; i++)
 		{
-			if (GetClientTeam(i) == 3)
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed randomly to \x04%N", choice);
-			else
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i)) {
+				if (GetClientTeam(i) == 3)
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed randomly to \x04%N", choice);
+				else
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			}
 		}
         DebugPrintToAll("Tank Control was surrendered randomly to: %N", choice);
     }
@@ -397,10 +403,12 @@ public TS_Auto_MenuCallBack(Handle:menu, MenuAction:action, param1, param2)
         
         for (new i = 1; i <= MaxClients; i++)
 		{
-			if (GetClientTeam(i) == 3)
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed to \x04%N", choice);
-			else
-				PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			if (IsClientInGame(i) && IsClientConnected(i) && !IsFakeClient(i)) {
+				if (GetClientTeam(i) == 3)
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed to \x04%N", choice);
+				else
+					PrintToChat(i, "\x03[Tank Swap]\x01 Tank Control was passed.");
+			}
 		}
         DebugPrintToAll("Tank Control was surrendered to: %N", choice);
     }
