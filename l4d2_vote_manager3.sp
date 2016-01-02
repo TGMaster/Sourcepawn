@@ -39,6 +39,7 @@ new String:filepath[PLATFORM_MAX_PATH];
 new Handle:hCooldownMode = INVALID_HANDLE;
 new Handle:hVoteCooldown = INVALID_HANDLE;
 new Handle:hTankImmunity = INVALID_HANDLE;
+new Handle:sv_alltalk = INVALID_HANDLE;
 new Handle:g_hSpectatorVote;
 new Handle:g_hBlockCount;
 new Handle:hRespectImmunity = INVALID_HANDLE;
@@ -105,6 +106,7 @@ public OnPluginStart()
 	BuildPath(Path_SM, filepath, sizeof(filepath), "logs/votemanager.txt");
 	
 	AutoExecConfig(true, "l4d2_votemanager");
+	sv_alltalk = FindConVar("sv_alltalk");
 }
 
 public TimerChanged(Handle:convar, const String:oldValue[], const String:newValue[])
@@ -293,7 +295,7 @@ public Action:VoteStart(client, const String:command[], argc)
 					else if(StrEqual(sIssue, "changealltalk", false))
 					{
 						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
-						if (GetConVarBool((FindConVar(sv_alltalk))
+						if (GetConVarBool(sv_alltalk))
 							CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Turn off alltalk){default}.", sCaller);
 						else
 							CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Turn on alltalk){default}.", sCaller);
