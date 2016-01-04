@@ -311,7 +311,7 @@ public OnPluginStart()
 	g_hCVar_VotingAdMode = CreateConVar("acs_voting_ad_mode", "3", "Sets how to advertise voting at the start of the map [0 = DISABLED, 1 = HINT TEXT, 2 = CHAT TEXT, 3 = OPEN VOTE MENU]\n * Note: This is only displayed once during a finale or scavenge map *", FCVAR_PLUGIN, true, 0.0, true, 3.0);
 	g_hCVar_VotingAdDelayTime = CreateConVar("acs_voting_ad_delay_time", "5", "Time, in seconds, to wait after a player spawns during a finale or scavenge map starts to advertise voting as defined in acs_voting_ad_mode\n * Note: If the server is up, changing this in the .cfg file takes two map changes before the change takes place *", FCVAR_PLUGIN);
 	g_hCVar_NextMapAdMode = CreateConVar("acs_next_map_ad_mode", "1", "Sets how the next campaign/map is advertised during a finale or scavenge map [0 = DISABLED, 1 = HINT TEXT, 2 = CHAT TEXT]", FCVAR_PLUGIN, true, 0.0, true, 2.0);
-	g_hCVar_NextMapAdInterval = CreateConVar("acs_next_map_ad_interval", "180.0", "The time, in seconds, between advertisements for the next campaign/map on finales and scavenge maps", FCVAR_PLUGIN, true, 60.0, false);
+	g_hCVar_NextMapAdInterval = CreateConVar("acs_next_map_ad_interval", "120.0", "The time, in seconds, between advertisements for the next campaign/map on finales and scavenge maps", FCVAR_PLUGIN, true, 60.0, false);
 	g_hCVar_MaxFinaleFailures = CreateConVar("acs_max_coop_finale_failures", "5", "The amount of times the survivors can fail a finale in Coop before it switches to the next campaign [0 = INFINITE FAILURES]", FCVAR_PLUGIN, true, 0.0, false);
 	g_hCVar_AutoChangeMapMode = CreateConVar("acs_autochangemap", "0", "Determines the mode in which ACS changes to the next campaign or map when the server is empty for a period of time [0 = DISABLED, 1 = NORMAL MAP ROTATION, 2 = FIXED MAP]", FCVAR_PLUGIN);
 	g_hCVar_AutoChangeMapTime = CreateConVar("acs_autochangemap_time", "15", "Time, in minutes, the server must be empty before ACS changes to next campaign/map", FCVAR_PLUGIN, true, 5.0, false);
@@ -343,6 +343,7 @@ public OnPluginStart()
 	//Register custom console commands
 	RegConsoleCmd("mapvote", MapVote);
 	RegConsoleCmd("mapvotes", DisplayCurrentVotes);
+	RegConsoleCmd("sm_nextmap", DisplayCurrentVotes);
 }
 
 /*======================================================================================
@@ -662,18 +663,9 @@ public OnMapStart()
 //Event fired when a player is fully in game
 public OnClientPutInServer(client)
 {
-	if (g_bVotingEnabled && OnFinaleOrScavengeMap() )
+	if (g_bVotingEnabled && OnFinaleOrScavengeMap() && GetClientTeam(client) != 1)
 		CreateTimer(g_fVotingAdDelayTime, SendMenuToClient, _, TIMER_FLAG_NO_MAPCHANGE);
 }
-/*public OnClientPostAdminCheck(iClient)
-{
-	if(IsClientInGame(iClient) && !IsFakeClient(iClient))
-	{
-		if(g_bVotingEnabled == true && OnFinaleOrScavengeMap() == true)
-			CreateTimer(g_fVotingAdDelayTime, Timer_DisplayVoteAdToAll, _, TIMER_FLAG_NO_MAPCHANGE);
-	}
-}
-*/
 
 //Event fired when the Round Ends
 public Action:Event_RoundEnd(Handle:hEvent, const String:strName[], bool:bDontBroadcast)
@@ -1196,7 +1188,7 @@ public Action:MapVote(iClient, args)
 	{
 		if (GetClientTeam(iClient) != 1)
 			VoteMenuDraw(iClient);
-		else PrintToChat(iClient, "Spectator can not vote");
+		else PrintToChat(iClient, "\x03[Nextmap] \x01Spectator can not vote.");
 	}
 }
 
@@ -1247,12 +1239,18 @@ public Action:DisplayCurrentVotes(iClient, args)
 				iMapVotes[iMap]++;
 		
 		//Display this particular map and its amount of votes it has to the client
+		new String:plural[1] = "s";
+		if (iMapVotes[iMap] == 1) plural[0] = 0;
 		if(iMapVotes[iMap] > 0)
 		{
 			if(g_iGameMode == GAMEMODE_SCAVENGE)
-				PrintToChat(iClient, "\x04          %s: \x05%d votes", g_strScavengeMapName[iMap], iMapVotes[iMap]);
+			{
+				PrintToChat(iClient, "\x04          %s: \x05%d vote%s", g_strScavengeMapName[iMap], iMapVotes[iMap], plural);
+			}
 			else
-				PrintToChat(iClient, "\x04          %s: \x05%d votes", g_strCampaignName[iMap], iMapVotes[iMap]);
+			{
+				PrintToChat(iClient, "\x04          %s: \x05%d vote%s", g_strCampaignName[iMap], iMapVotes[iMap], plural);
+			}
 		}
 	}
 }
