@@ -901,7 +901,18 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 		LogAction(client, -1, "%L initiated a %s vote", client, cvote[names]);
 		CPrintToChatAllEx(client, "{teamcolor}%N {default}called a custom vote.", client);
 		SetVoteResultCallback(vm, CVote_VoteHandler);
-		VoteMenu(vm, g_activeVoteStatus[targets], g_activeVoteStatus[targetct], 30);
+		new iNumPlayers;
+		decl iPlayers[MaxClients];
+		//list of non-spectators players
+		for (new i=1; i<=MaxClients; i++)
+		{
+			if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) == 1))
+			{
+				continue;
+			}
+			iPlayers[iNumPlayers++] = i;
+		}
+		VoteMenu(vm, iPlayers, iNumPlayers, 30);
 	}
 }
 
@@ -951,9 +962,20 @@ public CVote_MenuHandler(Handle:menu, MenuAction:action, param1, param2) {
 			case 3: {
 				new String:playername[64] = "";
 				GetClientName(param1, playername, sizeof(playername));
-				for (new i = 0; i < g_activeVoteStatus[targetct]; ++i)
-					if (IsClientInGame(g_activeVoteStatus[targets][i]) && !IsFakeClient(g_activeVoteStatus[targets][i])
-						PrintToChat(g_activeVoteStatus[targets][i], "[Vote] %t", "Vote Select", playername, itemname);
+				new iNumPlayers;
+				decl iPlayers[MaxClients];
+				//list of non-spectators players
+				for (new i=1; i<=MaxClients; i++)
+				{
+					if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) == 1))
+					{
+						continue;
+					}
+					iPlayers[iNumPlayers++] = i;
+				}
+				for (new i = 0; i < iNumPlayers; i++)
+					if (IsClientInGame(iPlayers[i]) && !IsFakeClient(iPlayers[i]))
+						PrintToChat(iPlayers[i], "[Vote] %t", "Vote Select", playername, itemname);
 			}
 		}
 	}
