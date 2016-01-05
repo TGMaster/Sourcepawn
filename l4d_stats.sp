@@ -220,7 +220,7 @@ Version History
 #define MAX_LINE_WIDTH 64
 #define MAX_MESSAGE_WIDTH 256
 #define MAX_QUERY_COUNTER 256
-#define DB_CONF_NAME "l4d2stats"
+#define DB_CONF_NAME "l4dstats"
 
 #define GAMEMODE_UNKNOWN -1
 #define GAMEMODE_COOP 0

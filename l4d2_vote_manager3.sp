@@ -70,7 +70,6 @@ new Float:flLastVote;
 
 // Set up integer for tracking block count of each client
 new g_iBlockCount[MAXPLAYERS+1] = 0;
-new g_iBlockReturn[MAXPLAYERS+1] = 0;
 
 public OnPluginStart()
 {
@@ -143,7 +142,6 @@ public OnClientDisconnect_Post(client)
 {
 	// Reset the client's block count when they disconnect (also called when a map changes)
 	g_iBlockCount[client] = 0;
-	g_iBlockReturn[client] = 0;
 }
 
 public Action:TransitionCheck(Handle:Timer, any:userid)
@@ -278,41 +276,41 @@ public Action:VoteStart(client, const String:command[], argc)
 					}	
 					else if(StrEqual(sIssue, "changemission", false))
 					{
-						LogVoteManager("%T", "Vote Change Map", LANG_SERVER, sCaller);
-						CPrintToChatAllEx(client, "%t", "Vote Change Map", sCaller);
+						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
+						CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Change Map){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "restartgame", false))
 					{
-						LogVoteManager("%T", "Vote Restart", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Restart", sCaller);
+						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
+						CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Restart Chapter){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
-					else if(StrEqual(sIssue, "changechapter", false))
+					else if(StrEqual(sIssue, "restartgame", false))
 					{
-						LogVoteManager("%T", "Vote Change Chap", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Change Chap", sCaller);
+						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
+						CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Restart Chapter){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "changealltalk", false))
 					{
 						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
 						if (GetConVarBool(sv_alltalk))
-							CPrintToChatAll("{green}%N {default}has called a vote {olive}(Turn off alltalk){default}.", sCaller);
+							CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Turn off alltalk){default}.", sCaller);
 						else
-							CPrintToChatAll("{green}%N {default}has called a vote {olive}(Turn on alltalk){default}.", sCaller);
+							CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Turn on alltalk){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "returntolobby", false))
 					{
-						g_iBlockReturn[client]++;
-						if (g_iBlockReturn[client] >= 2)
+						g_iBlockCount[client]++;
+						if (g_iBlockCount[client] >= 2)
 						{
 							PrintToChatAll("\x04%s \x01was \x05kicked \x01for calling gay vote.", sCaller);
 							KickClient(client, "Stop doing this fucking thing.");
 						}
-						LogVoteManager("%T", "Vote Return", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Return", sCaller);
+						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
+						CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Back to lobby){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "changedifficulty", false))
