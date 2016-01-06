@@ -275,12 +275,6 @@ public Action:VoteStart(client, const String:command[], argc)
 						LogVoteManager("%T", "Vote Called 2 Arguments", LANG_SERVER, sCaller, sIssue, sOption);
 						CPrintToChatAllEx(client, "%t", "Vote Called 2 Arguments", sCaller, sIssue, sOption);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s') (option '%s')", client, sIssue, sOption);
-					}	
-					else if(StrEqual(sIssue, "changemission", false))
-					{
-						LogVoteManager("%T", "Vote Change Map", LANG_SERVER, sCaller);
-						CPrintToChatAllEx(client, "%t", "Vote Change Map", sCaller);
-						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "restartgame", false))
 					{
@@ -324,7 +318,7 @@ public Action:VoteStart(client, const String:command[], argc)
 					else
 					{
 						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Called", sCaller, sIssue);
+						CPrintToChatAllEx(client, "%t", "Vote Called", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 				}
