@@ -7281,11 +7281,11 @@ public GetClientRankPlayerJoined(Handle:owner, Handle:hndl, const String:error[]
 
 	if (ClientRank[client] > 0)
 	{
-		StatsPrintToChatAll("\x04%s \x01joined the game! (Rank: \x03%i \x01/ Points: \x03%i\x01)", userName, ClientRank[client], ClientPoints[client]);
+		PrintToChatAll("\x04%s \x01joined the game! (Rank: \x03%i \x01/ Points: \x03%i\x01)", userName, ClientRank[client], ClientPoints[client]);
 	}
 	else
 	{
-		StatsPrintToChatAll("\x04%s \x01joined the game! (No ranking yet)", userName);
+		PrintToChatAll("\x04%s \x01joined the game! (No ranking yet)", userName);
 	}
 }
 
