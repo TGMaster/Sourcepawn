@@ -1072,9 +1072,9 @@ public bool:PdpStatsInitialize()
 	hStatsWelcomeMsgDefault = CreateConVar("l4d_pdp_stats_welc_msg","0","Default welcome message behaviour for clients(can be customised by the client later):\n    0 - No welcome messages\n    1 - Private welcome messages\n    2 - Public welcome messages",FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_NOTIFY);
 	
 	
-	RegConsoleCmd("sm_hunterstat",PdpShowStatsMenu,"Displays your pd+ stats menu.");
 	RegConsoleCmd("sm_hunter",PdpShowStatsMenu,"Displays your pd+ stats menu.");
-	RegConsoleCmd("sm_tophunters",PdpShowTopMenu,"Shows the top <n> personal best pounce damage scores on the server (usage - sm_pdptop <n>).");
+	RegConsoleCmd("sm_tophunters",PdpShowTopMenu,"Shows the top <n> personal best pounce damage scores on the server (usage - sm_tophunters <n>).");
+	RegConsoleCmd("sm_rankhunter",PdpShowTopMenu,"Shows the top <n> personal best pounce damage scores on the server (usage - sm_rankhunter <n>).");
 	RegConsoleCmd("sm_pdpwelcome",PdpWelcomeMsgToggle,"Controls how pd+ displays your welcome/stats message on connect:\n    0 - No message\n    1 - Private message (to only you)\n    2 - Public message (to all players)")
 	RegConsoleCmd("sm_tophuntdelay",PdpTopDelayToggle,"Change (using sm_tophuntdelay <n>) or toggle (sm_tophuntdelay) the delay between receiving pages of the top pounces menu")
 
@@ -1737,10 +1737,10 @@ public Action:PdpShowStatsMenu(client, args)
 	KvJumpToKey(pdpkv,clientAuth,true)
 
 
-	new Handle:menu = CreateMenu(Stat_MenuHandler);
-	SetMenuTitle(menu, "Hunter Pounce Stats\n ");
+	new Handle:menu = CreatePanel();
+	DrawPanelText(menu, "->1. Hunter Pounce Stats:");
 	new String:clientName[32] = "";
-	KvGetString(pdpkv,"name",clientName,sizeof(clientName),"Nameless");
+	KvGetString(pdpkv,"name",clientName,sizeof(clientName),"unknown");
 //	PrintToChat(client,"\x01[Hunter] \x05Hunter Pounce Stats for \x03%s\x01",clientName);
 	
 	
@@ -1748,35 +1748,35 @@ public Action:PdpShowStatsMenu(client, args)
 //	PrintToChat(client,"\x04Highest Damage Pounce:          \x01%i",highestDmg);
 	new String:mhighestDmg[64];
 	Format(mhighestDmg,sizeof(mhighestDmg),"Highest Damage Pounce: %i",highestDmg);
-	AddMenuItem(menu, "", mhighestDmg,ITEMDRAW_DISABLED);
+	DrawPanelText(menu, mhighestDmg);
 
 	
 	new totalPounces = KvGetNum(pdpkv,"total pounces",0);
 //	PrintToChat(client,"\x04Total Pounces Landed:           \x01%i",totalPounces);
 	new String:mtotalPounces[64];
 	Format(mtotalPounces,sizeof(mtotalPounces),"Total Pounces Landed: %i",totalPounces);
-	AddMenuItem(menu, "", mtotalPounces,ITEMDRAW_DISABLED);
+	DrawPanelText(menu, mtotalPounces);
 	
 	
 	new totalDPs = KvGetNum(pdpkv,"total dmg pounces",0);
 //	PrintToChat(client,"\x04Total Damage Pounces Landed:    \x01%i",totalDPs);
 	new String:mtotalDPs[64];
 	Format(mtotalDPs,sizeof(mtotalPounces),"Total Damage Pounces Landed: %i",totalDPs);
-	AddMenuItem(menu, "", mtotalDPs,ITEMDRAW_DISABLED);
+	DrawPanelText(menu, mtotalDPs);
 	
 	
 	new totalDmg = KvGetNum(pdpkv,"total pounce dmg",0);
 //	PrintToChat(client,"\x04Total Pounce Damage Dealt:      \x01%i",totalDmg);
 	new String:mtotalDmg[64];
 	Format(mtotalDmg,sizeof(mtotalDmg),"Total Pounce Damage Dealt: %i",totalDmg);
-	AddMenuItem(menu, "", mtotalDmg,ITEMDRAW_DISABLED);
+	DrawPanelText(menu, mtotalDmg);
 
 	
 	new totalIncaps = KvGetNum(pdpkv,"total incap pounces",0);
 //	PrintToChat(client,"\x04Total Incaps by Pounce Dmg:     \x01%i",totalIncaps);
 	new String:mtotalIncaps[64];
 	Format(mtotalIncaps,sizeof(mtotalIncaps),"Total Incaps by Pounce Dmg: %i",totalIncaps);
-	AddMenuItem(menu, "", mtotalIncaps,ITEMDRAW_DISABLED);
+	DrawPanelText(menu, mtotalIncaps);
 	
 	
 	//Only obtain incap dmg info for clients if incap dmg is actually enabled
@@ -1787,20 +1787,17 @@ public Action:PdpShowStatsMenu(client, args)
 		//PrintToChat(client,"\x04Total Incap Carryover Dmg Done: \x01%i",incapDmg);
 		new String:mincapDmg[64];
 		Format(mincapDmg,sizeof(mincapDmg),"Total Incap Carryover Dmg Done: %i",incapDmg);
-		AddMenuItem(menu, "", mincapDmg,ITEMDRAW_DISABLED);
+		DrawPanelText(menu, mincapDmg);
 	}
 
-	DisplayMenu(menu, client, 30);
+	SendPanelToClient(menu, client, Stat_MenuHandler, 30);
+	CloseHandle(menu);
 	CloseHandle(pdpkv);
 	
 	return Plugin_Continue;
 }
 
-public Stat_MenuHandler(Handle:menu, MenuAction:action, param1, param2) {
-	if (action == MenuAction_End) 
-		CloseHandle(menu);
-}
-
+public Stat_MenuHandler(Handle:menu, MenuAction:action, param1, param2) {}
 
 //Contract drawing of the entries after 5 out to a subfunction which initiates a timer after entering each successive 
 //5 stats with 2 blank rows above them [this ensures it fills the 7 row chat box while it can stay onscreen thru 2 more 
@@ -1882,11 +1879,16 @@ public Action:PdpShowTopMenu(client, args)
 	//x stats entries available
 	new String:topNoStr[4] = "";
 	GetCmdArg(1,topNoStr,sizeof(topNoStr));
-	
+
 	//Default to top 10 if they don't input a value for <n>
 	if(StrEqual(topNoStr,""))
-	topNoStr = "5";
+	topNoStr = "10";
 	new topNo = StringToInt(topNoStr);
+	if(topNo > 10) 
+	{
+		PrintToChat(client, "[SM] Top Hunters limit is 10");
+		return Plugin_Handled;
+	}
 	
 	new String:tooFewStats[128] = "";
 	
@@ -1896,12 +1898,6 @@ public Action:PdpShowTopMenu(client, args)
 		tooFewStats = "\x01No more stats entries available.";
 		topNo = statsEntries;
 	}
-	
-	//Print to chat what will serve as a menu title
-	new String:menutop[10];
-	new Handle:menu = CreateMenu(Top_MenuHandler);
-	Format(menutop,sizeof(menutop),"->1. Pouncedamage Personal Bests (Top %i)",topNo);
-	AddMenuItem(menu, menutop, menutop); 
 	
 	//Setup the data pack ready to be sent to the paginating timer function
 	new Handle:topPack;
@@ -1933,7 +1929,7 @@ public Action:PdpShowTopMenu(client, args)
 		KvRewind(pdpkv);
 		KeyValuesToFile(pdpkv, "hunterstats.txt");
 		
-		fTopDelay = 5.0;
+		fTopDelay = 1.0;
 	}
 	
 	//Create the datapack & timer to draw each successive 5 entries, repeating with the delay obtained earlier
@@ -2018,10 +2014,13 @@ public Action:PdpStatsDrawTop5(Handle:pack)
 	new String:playerName[64] = "";
 	new bestDP = 0;
 	
-	new Handle:menu = CreateMenu(Top_MenuHandler);
-	AddMenuItem(menu, "", "Pouncedamage Personal Bests (Top 5)\n ");
-	new String:top5[32];
-	while(i < 5 && packPos <= topNo)
+	new String:menutop[64];
+	new Handle:menu = CreatePanel();
+	Format(menutop,sizeof(menutop),"->1. Top %i Best Hunter",topNo);
+	DrawPanelText(menu, menutop);  
+	DrawPanelText(menu, " ");
+	new String:top5[128];
+	while(i < 10 && packPos <= topNo)
 	{
 		i++;
 		packPos++;
@@ -2031,15 +2030,15 @@ public Action:PdpStatsDrawTop5(Handle:pack)
 		KvRewind(pdpkv);
 		KvJumpToKeySymbol(pdpkv,keyId);
 		
-		KvGetString(pdpkv,"name",playerName,sizeof(playerName),"unnamed");
+		KvGetString(pdpkv,"name",playerName,sizeof(playerName),"unknown");
 		
 		bestDP = KvGetNum(pdpkv,"highest dmg pounce",0);
 		Format(top5,sizeof(top5)," %s - %i dmg",playerName,bestDP);
-		AddMenuItem(menu, "", top5, ITEMDRAW_DISABLED);
+		DrawPanelText(menu, top5);
 	}
-	DisplayMenu(menu,client,30);
+	SendPanelToClient(menu,client,Top_MenuHandler,30);
 	gTopPos[client] = packPos;
-	
+	CloseHandle(menu);
 	CloseHandle(pdpkv);
 	
 	if(gTopPos[client] >= topNo)
@@ -2080,30 +2079,34 @@ public Action:PdpStatsBuildTopBy5(Handle:timer, Handle:pack)
 	new startPos = gTopPos[client];
 	
 	new packPos = 0;
-	new keyId;
+	//new keyId;
 	
 	//Obtain the cell values into keyId until we reach the first one we're after
 	while(packPos<startPos)
 	{
 		packPos++;
-		keyId = ReadPackCell(pack);
+		//keyId = ReadPackCell(pack);
 	}
 	
-	new i = 0;
+/*	new i = 0;
 	new String:playerName[64] = "";
 	new bestDP = 0;
 	
 	//Add two blank lines at the top to fill the 7-line chat box [if it's not the first page of the list]
-/*	if(gTopPos[client] > 1)
+	if(gTopPos[client] > 1)
 	{
 		PrintToChat(client,"  ");
 		PrintToChat(client,"  ");
 	}
-*/
-	new Handle:menu = CreateMenu(Top_MenuHandler);
-	SetMenuTitle(menu, "Pouncedamage Personal Bests (Top 5)\n ");
-	new String:top5[32];		
-	while(i < 5 && packPos < topNo)
+
+	new String:menutop[64];
+	new Handle:menu = CreatePanel();
+	Format(menutop,sizeof(menutop),"->1. Top %i Best Hunter",topNo);
+	DrawPanelText(menu, menutop);  
+	DrawPanelText(menu, " ");
+	
+	new String:top5[128];		
+	while(i < 10 && packPos < topNo)
 	{
 		i++;
 		packPos++;
@@ -2113,15 +2116,16 @@ public Action:PdpStatsBuildTopBy5(Handle:timer, Handle:pack)
 		KvRewind(pdpkv);
 		KvJumpToKeySymbol(pdpkv,keyId);
 		
-		KvGetString(pdpkv,"name",playerName,sizeof(playerName),"unnamed");
+		KvGetString(pdpkv,"name",playerName,sizeof(playerName),"unknown");
 		
 		bestDP = KvGetNum(pdpkv,"highest dmg pounce",0);
-
-		Format(top5,sizeof(top5)," %s  -  %i dmg",playerName,bestDP);
-		AddMenuItem(menu, "", top5, ITEMDRAW_DISABLED);
+		Format(top5,sizeof(top5)," %s - %i dmg",playerName,bestDP);
+		DrawPanelText(menu, top5);
 	}
 	
-	DisplayMenu(menu,client,30);
+	SendPanelToClient(menu,client,Top_MenuHandler,30);
+	CloseHandle(menu);
+*/
 	gTopPos[client] = packPos;
 	
 	CloseHandle(pdpkv);
