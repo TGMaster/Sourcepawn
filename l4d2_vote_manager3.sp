@@ -100,9 +100,9 @@ public OnPluginStart()
 	
 	AddCommandListener(VoteStart, "callvote");
 	AddCommandListener(VoteAction, "vote");
-	RegConsoleCmd("sm_pass", Command_VotePassvote, "Pass a current vote");
-	RegConsoleCmd("sm_veto", Command_VoteVeto, "Veto a current vote");
-	RegConsoleCmd("sm_customvote", CustomVote, "Start a custom vote");
+	RegAdminCmd("sm_pass", Command_VotePassvote, ADMFLAG_KICK, "Pass a current vote");
+	RegAdminCmd("sm_veto", Command_VoteVeto, ADMFLAG_KICK,"Veto a current vote");
+	RegAdminCmd("sm_customvote", CustomVote, ADMFLAG_KICK, "Start a custom vote");
 	
 	BuildPath(Path_SM, filepath, sizeof(filepath), "logs/votemanager.txt");
 	
