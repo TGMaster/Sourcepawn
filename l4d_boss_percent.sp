@@ -5,7 +5,6 @@
 #define L4D2UTIL_STOCKS_ONLY
 #include <l4d2util>
 #undef REQUIRE_PLUGIN
-#include <readyup>
 
 #include <colors>
 
@@ -24,7 +23,6 @@ new Handle:g_hVsBossBuffer;
 new Handle:hCvarPrintToEveryone;
 new Handle:hCvarTankPercent;
 new Handle:hCvarWitchPercent;
-new bool:readyUpIsAvailable;
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
@@ -44,31 +42,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_tank", BossCmd);
 	RegConsoleCmd("sm_witch", BossCmd);
 
-	HookEvent("player_left_start_area", LeftStartAreaEvent, EventHookMode_PostNoCopy);
 	HookEvent("round_start", RoundStartEvent, EventHookMode_PostNoCopy);
-}
-
-public OnAllPluginsLoaded()
-{
-	readyUpIsAvailable = LibraryExists("readyup");
-}
-
-public OnLibraryRemoved(const String:name[])
-{
-	if (StrEqual(name, "readyup")) readyUpIsAvailable = false;
-}
-
-public OnLibraryAdded(const String:name[])
-{
-	if (StrEqual(name, "readyup")) readyUpIsAvailable = true;
-}
-
-public LeftStartAreaEvent(Handle:event, const String:name[], bool:dontBroadcast)
-{
-	if (!readyUpIsAvailable)
-		for (new client = 1; client <= MaxClients; client++)
-			if (IsClientConnected(client) && IsClientInGame(client))
-				PrintBossPercents(client);
 }
 
 public OnRoundIsLive()
@@ -110,20 +84,7 @@ public Action:SaveBossFlows(Handle:timer)
 			iTankPercent = RoundToNearest(GetTankFlow(1)*100.0);
 		}
 	}
-
-	if (readyUpIsAvailable)
-	{
-		decl String:readyString[65];
-		if (iWitchPercent && iTankPercent)
-			Format(readyString, sizeof(readyString), "Tank: %d%%, Witch: %d%%", iTankPercent, iWitchPercent);
-		else if (iTankPercent)
-			Format(readyString, sizeof(readyString), "Tank: %d%%, Witch: None", iTankPercent);
-		else if (iWitchPercent)
-			Format(readyString, sizeof(readyString), "Tank: None, Witch: %d%%", iWitchPercent);
-		else
-			Format(readyString, sizeof(readyString), "Tank: None, Witch: None");
-		AddStringToReadyFooter(readyString);
-	}
+	
 }
 
 stock PrintBossPercents(client)
