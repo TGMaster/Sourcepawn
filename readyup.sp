@@ -5,12 +5,14 @@
 #include <left4downtown>
 #include <l4d2_direct>
 
+#define SOUND "/level/gnomeftw.wav"
+
 public Plugin:myinfo =
 {
 	name = "L4D2 Ready-Up",
 	author = "CanadaRox & Blazers Team",
 	description = "New and improved ready-up plugin.",
-	version = "6.1",
+	version = "6",
 	url = ""
 };
 
@@ -27,6 +29,7 @@ new Handle:god;
 new Handle:sb_stop;
 new Handle:liveForward;
 new bool:inReadyUp;
+new bool:blockSecretSpam[MAXPLAYERS + 1];
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
@@ -42,9 +45,19 @@ public OnPluginStart()
 	sb_stop = FindConVar("sb_stop");
 	
 	RegConsoleCmd("sm_return", Return_Cmd, "Return to a valid saferoom spawn if you get stuck");
+	RegConsoleCmd("sm_secret", Secret_Cmd, "Every player has a different secret number between 0-1023");
 	
 	LoadTranslations("common.phrases");
 	
+}
+
+public OnMapStart()
+{
+	PrecacheSound(SOUND);
+	for (new client = 1; client <= MAXPLAYERS; client++)
+	{
+		blockSecretSpam[client] = false;
+	}
 }
 
 public OnPluginEnd()
@@ -91,7 +104,9 @@ public Action:L4D_OnFirstSurvivorLeftSafeArea(client)
 
 public Action:Return_Cmd(client, args)
 {
-	ReturnPlayerToSaferoom(client, false);
+	if (inReadyUp)
+		ReturnPlayerToSaferoom(client, false);
+	else ReplyToCommand(client, "[SM] This command can only be used when nobody leaves safe area.");
 	return Plugin_Handled;
 }
 
@@ -156,5 +171,65 @@ ReturnPlayerToSaferoom(client, bool:flagsSet = true)
 	{
 		SetCommandFlags("warp_to_start_area", warp_flags);
 		SetCommandFlags("give", give_flags);
+	}
+}
+
+public Action:Secret_Cmd(client, args)
+{
+	if (inReadyUp)
+	{
+		new AdminId:id;
+		id = GetUserAdmin(client);
+		new bool:hasFlag = false;
+		if (id != INVALID_ADMIN_ID)
+		{
+			hasFlag = GetAdminFlag(id, Admin_Kick); // Check for specific admin flag
+		}
+		
+		if (!hasFlag)
+		{
+			ReplyToCommand(client, "[SM] Only admins can do this.");
+			return Plugin_Handled;
+		}
+		DoSecrets(client);
+
+		return Plugin_Handled;
+		
+	}
+	ReplyToCommand(client, "[SM] This command can only be used when nobody leaves safe area.");
+	return Plugin_Continue;
+}
+
+stock DoSecrets(client)
+{
+	if (L4D2Team:GetClientTeam(client) == L4D2Team_Survivor && !blockSecretSpam[client])
+	{
+		new particle = CreateEntityByName("info_particle_system");
+		decl Float:pos[3];
+		GetClientAbsOrigin(client, pos);
+		pos[2] += 50;
+		TeleportEntity(particle, pos, NULL_VECTOR, NULL_VECTOR);
+		DispatchKeyValue(particle, "effect_name", "achieved");
+		DispatchKeyValue(particle, "targetname", "particle");
+		DispatchSpawn(particle);
+		ActivateEntity(particle);
+		AcceptEntityInput(particle, "start");
+		CreateTimer(10.0, killParticle, particle, TIMER_FLAG_NO_MAPCHANGE);
+		EmitSoundToAll(SOUND, client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+		CreateTimer(2.0, SecretSpamDelay, client);
+		blockSecretSpam[client] = true;
+	}
+}
+
+public Action:SecretSpamDelay(Handle:timer, any:client)
+{
+	blockSecretSpam[client] = false;
+}
+
+public Action:killParticle(Handle:timer, any:entity)
+{
+	if (entity > 0 && IsValidEntity(entity) && IsValidEdict(entity))
+	{
+		AcceptEntityInput(entity, "Kill");
 	}
 }
