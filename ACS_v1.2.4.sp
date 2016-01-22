@@ -663,8 +663,11 @@ public OnMapStart()
 //Event fired when a player is fully in game
 public OnClientPutInServer(client)
 {
-	if (g_bVotingEnabled && OnFinaleOrScavengeMap() && GetClientTeam(client) != 1)
-		CreateTimer(g_fVotingAdDelayTime, SendMenuToClient, _, TIMER_FLAG_NO_MAPCHANGE);
+	if(g_bVotingEnabled && OnFinaleOrScavengeMap())
+	{
+		if(GetClientTeam(client) != 1)
+			CreateTimer(g_fVotingAdDelayTime, SendMenuToClient, _, TIMER_FLAG_NO_MAPCHANGE);
+	}
 }
 
 //Event fired when the Round Ends

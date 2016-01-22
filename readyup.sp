@@ -183,7 +183,7 @@ public Action:Secret_Cmd(client, args)
 		new bool:hasFlag = false;
 		if (id != INVALID_ADMIN_ID)
 		{
-			hasFlag = GetAdminFlag(id, Admin_Kick); // Check for specific admin flag
+			hasFlag = GetAdminFlag(id, Admin_Reservation); // Check for specific admin flag
 		}
 		
 		if (!hasFlag)

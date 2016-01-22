@@ -2,8 +2,6 @@
 #include <sdktools>
 #include <adminmenu>
 #include <builtinvotes>
-#define VOTE_NO "###no###"
-#define VOTE_YES "###yes###"
 
 //Global Vars
 new Handle:g_hModVote = INVALID_HANDLE;
@@ -39,7 +37,7 @@ public Plugin:myinfo =
 public OnPluginStart()
 {
 	// Perform one-time startup tasks ..
-	RegConsoleCmd("sm_mod", VoteModsMenu);
+	RegConsoleCmd("sm_votemod", VoteModsMenu);
 	
 	PluginsDefaultDisabled = CreateConVar("plugins_default_disabled","","What plugins you want disabled by default (use full filename, and seperate by |)",FCVAR_PLUGIN);
 	PluginsUsedFilter = CreateConVar("plugins_used_filter","","What plugins you want used for voting (use full filename, and seperate by |)",FCVAR_PLUGIN);
@@ -138,7 +136,7 @@ public Action:VoteModsMenu(client,args)
     decl String:plPosition[2];
     decl String:menuItemTitle[320];
     
-    SetMenuTitle(menu, "Choose Mod");
+    SetMenuTitle(menu, "Choose Plugin:");
     
     for( new i=0; i<numPlugins; i++)
     {	
@@ -187,8 +185,8 @@ VoteModConfirm(client,plId)
     
     SetMenuTitle(menu, menuTitle);
     
-    AddMenuItem(menu, VOTE_YES, "Sure");
-    AddMenuItem(menu, VOTE_NO, "Not sure");
+	AddMenuItem(menu, "1", "Sure", ITEMDRAW_DEFAULT);
+    AddMenuItem(menu, "0", "Not sure", ITEMDRAW_DEFAULT);
     
     SetMenuExitButton(menu, true);
     DisplayMenu(menu, client, MENU_TIME_FOREVER);
@@ -293,13 +291,13 @@ public VoteResultHandler(Handle:vote, num_votes, num_clients, const client_info[
 			{
 				if (g_pluginStates[g_pluginIdInVote] == 0)
 				{
-					DisplayBuiltinVotePass(vote, "Mod will be turned ON");
+					DisplayBuiltinVotePass(vote, "Plugin will be turned ON");
 					ChangeMod(true);
 					return;
 				}
 				else
 				{
-					DisplayBuiltinVotePass(vote, "Mod will be turned OFF");
+					DisplayBuiltinVotePass(vote, "Plugin will be turned OFF");
 					ChangeMod(false);
 					return;
 				}

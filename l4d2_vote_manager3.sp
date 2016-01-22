@@ -39,8 +39,6 @@ new String:filepath[PLATFORM_MAX_PATH];
 new Handle:hCooldownMode = INVALID_HANDLE;
 new Handle:hVoteCooldown = INVALID_HANDLE;
 new Handle:hTankImmunity = INVALID_HANDLE;
-new Handle:sv_alltalk = INVALID_HANDLE;
-new Handle:g_hSpectatorVote;
 new Handle:g_hBlockCount;
 new Handle:hRespectImmunity = INVALID_HANDLE;
 new Handle:hLog = INVALID_HANDLE;
@@ -88,7 +86,6 @@ public OnPluginStart()
 	hTankImmunity = CreateConVar("l4d2_votemanager_tank_immunity", "0", "Tanks have immunity against kick votes", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	hRespectImmunity = CreateConVar("l4d2_votemanager_respect_immunity", "1", "Respect admin immunity levels in kick votes(only when admin kicking admin)", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	hLog = CreateConVar("l4d2_votemanager_log", "0", "1=Log vote info to files 2=Log vote info to server; add the values together if you want", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSpectatorVote = CreateConVar("l4d2_votemanager_blockspecvote", "b", "0 - Allow this type of vote, x - Only clients that match one or more of these flags can call this vote",						FCVAR_PLUGIN, true, 0.0, true, 0.0);
 	g_hBlockCount = CreateConVar("vb_blockcount", "3", "0 - Disable blocked vote limit for clients, n - Maximum number of blocked votes per client per map before they are kicked",	FCVAR_PLUGIN, true, 0.0, true, 5.0);
 	
 	HookUserMessage(GetUserMessageId("VotePass"), VotePass);
@@ -107,7 +104,6 @@ public OnPluginStart()
 	BuildPath(Path_SM, filepath, sizeof(filepath), "logs/votemanager.txt");
 	
 	AutoExecConfig(true, "l4d2_votemanager");
-	sv_alltalk = FindConVar("sv_alltalk");
 }
 
 public TimerChanged(Handle:convar, const String:oldValue[], const String:newValue[])
@@ -208,6 +204,8 @@ public Action:VoteAction(client, const String:command[], argc)
 public Action:VoteStart(client, const String:command[], argc)
 {
 	if(GetServerClientCount(true) == 0 || client == 0) return Plugin_Handled; //prevent votes while server is empty or if server tries calling vote
+	if(IsFakeClient(client) || !IsClientInGame(client)) return Plugin_Handled;
+	
 	if(argc >= 1)
 	{
 		new Float:flEngineTime = GetEngineTime();
@@ -216,41 +214,6 @@ public Action:VoteStart(client, const String:command[], argc)
 		VoteStringsToLower();
 		Format(sCaller, sizeof(sCaller), "%N", client);
 
-		if (GetClientTeam(client) == 1 && !IsClientAdmin(client) && GetConVarBool(g_hSpectatorVote))
-		{
-			// Use a for loop to go through all the human clients and send the appropriate message
-			for (new x = 1; x <= MaxClients; x++)
-			{
-				if (IsClientInGame(x) && !IsFakeClient(x))
-				{
-					if (client == x)
-					{
-						PrintToChat(x, "\x03[Vote Block]\x01Spectator is not allowed to vote in game!");
-					}
-
-					else if (IsClientAdmin(x))
-					{
-						PrintToChat(x, "\x03[Vote Block]\x04 %s \x01tried to call a vote while in spectate!", sCaller);
-					}
-				}
-			}
-
-			// If the convar for blocked vote limits is set (great than zero), increase the client's blocked vote count by one
-			if (GetConVarInt(g_hBlockCount) > 0)
-			{
-				g_iBlockCount[client]++;
-
-				// If they have reached the limit for blocked votes, kick them
-				if (g_iBlockCount[client] >= GetConVarInt(g_hBlockCount))
-				{
-					PrintToChatAll("\x04%s \x01was \x05kicked \x01for calling too many gay votes.", sCaller);
-					KickClient(client, "You are abusing kick vote");
-				}
-			}
-
-			// We block the vote by stopping the server from seeing the callvote command
-			return Plugin_Handled;
-		}
 		if((ClientHasAccess(client, "cooldown_immunity") || iNextVote[client] <= flEngineTime) && VoteStatus == VOTE_NONE)
 		{
 			if(flEngineTime-flLastVote <= 5.5) //minimum time that is required by the voting system itself before another vote can be called
@@ -272,29 +235,61 @@ public Action:VoteStart(client, const String:command[], argc)
 				{
 					if(argc == 2)
 					{
-						LogVoteManager("%T", "Vote Called 2 Arguments", LANG_SERVER, sCaller, sIssue, sOption);
-						CPrintToChatAllEx(client, "%t", "Vote Called 2 Arguments", sCaller, sIssue, sOption);
-						VoteLogAction(client, -1, "'%L' callvote (issue '%s') (option '%s')", client, sIssue, sOption);
+						if(StrEqual(sIssue, "changemission", false))
+						{
+							decl String:sMap[16];
+							if(StrEqual(sOption,"l4d2c1"))
+								Format(sMap, sizeof(sMap), "Dead Center");
+							if(StrEqual(sOption,"l4d2c2"))
+								Format(sMap, sizeof(sMap), "Dark Carnival");
+							if(StrEqual(sOption,"l4d2c3"))
+								Format(sMap, sizeof(sMap), "Swamp Fever");
+							if(StrEqual(sOption,"l4d2c4"))
+								Format(sMap, sizeof(sMap), "Hard Rain");
+							if(StrEqual(sOption,"l4d2c5"))
+								Format(sMap, sizeof(sMap), "The Parish");
+							if(StrEqual(sOption,"l4d2c6"))
+								Format(sMap, sizeof(sMap), "The Passing");
+							if(StrEqual(sOption,"l4d2c7"))
+								Format(sMap, sizeof(sMap), "The Sacrifice");
+							if(StrEqual(sOption,"l4d2c8"))
+								Format(sMap, sizeof(sMap), "No Mercy");
+							if(StrEqual(sOption,"l4d2c9"))
+								Format(sMap, sizeof(sMap), "Crash Course");
+							if(StrEqual(sOption,"l4d2c10"))
+								Format(sMap, sizeof(sMap), "Death Toll");
+							if(StrEqual(sOption,"l4d2c11"))
+								Format(sMap, sizeof(sMap), "Dead Air");
+							if(StrEqual(sOption,"l4d2c12"))
+								Format(sMap, sizeof(sMap), "Blood Harvest");
+							if(StrEqual(sOption,"l4d2c13"))
+								Format(sMap, sizeof(sMap), "Cold Stream");
+							CPrintToChatAllEx(client, "%t", "Vote Called 2 Map", sCaller, sIssue, sMap);
+						}
+						else if(StrEqual(sIssue, "changedifficulty", false))
+						{
+							decl String:sDifficulty[12];
+							if(StrEqual(sOption, "easy"))
+								Format(sDifficulty, sizeof(sDifficulty), "Easy");
+							if(StrEqual(sOption, "normal"))
+								Format(sDifficulty, sizeof(sDifficulty), "Normal");
+							if(StrEqual(sOption, "hard"))
+								Format(sDifficulty, sizeof(sDifficulty), "Advanced");
+							if(StrEqual(sOption, "impossible"))
+								Format(sDifficulty, sizeof(sDifficulty), "Expert");
+							CPrintToChatAllEx(client, "%t", "Vote Called 2 Difficulty", sCaller, sIssue, sDifficulty);
+						}
+						else
+						{
+							LogVoteManager("%T", "Vote Called 2 Arguments", LANG_SERVER, sCaller, sIssue, sOption);
+							CPrintToChatAllEx(client, "%t", "Vote Called 2 Arguments", sCaller, sIssue, sOption);
+							VoteLogAction(client, -1, "'%L' callvote (issue '%s') (option '%s')", client, sIssue, sOption);
+						}
 					}
 					else if(StrEqual(sIssue, "restartgame", false))
 					{
 						LogVoteManager("%T", "Vote Restart", LANG_SERVER, sCaller, sIssue);
 						CPrintToChatAllEx(client, "%t", "Vote Restart", sCaller);
-						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
-					}
-					else if(StrEqual(sIssue, "changechapter", false))
-					{
-						LogVoteManager("%T", "Vote Change Chap", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Change Chap", sCaller);
-						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
-					}
-					else if(StrEqual(sIssue, "changealltalk", false))
-					{
-						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
-						if (GetConVarBool(sv_alltalk))
-							CPrintToChatAll("{green}%N {default}has called a vote {olive}(Turn off alltalk){default}.", sCaller);
-						else
-							CPrintToChatAll("{green}%N {default}has called a vote {olive}(Turn on alltalk){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else if(StrEqual(sIssue, "returntolobby", false))
@@ -307,12 +302,6 @@ public Action:VoteStart(client, const String:command[], argc)
 						}
 						LogVoteManager("%T", "Vote Return", LANG_SERVER, sCaller, sIssue);
 						CPrintToChatAllEx(client, "%t", "Vote Return", sCaller);
-						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
-					}
-					else if(StrEqual(sIssue, "changedifficulty", false))
-					{
-						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "{teamcolor}%N {default}has called a vote {olive}(Change difficulty){default}.", sCaller);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 					else
@@ -704,7 +693,6 @@ stock Action:ClientCanKick(client, const String:userid[])
 		// If they have reached the limit for blocked votes, kick them
 		if (g_iBlockCount[client] >= GetConVarInt(g_hBlockCount))
 		{
-			PrintToChatAll("\x04%s \x01was \x05kicked \x01for calling too many gay votes.", client);
 			KickClient(client, "Stop kicking people.");
 		}
 	}
@@ -973,20 +961,5 @@ stock LogVoteManager(const String:log[], any:...)
 	else
 	{
 		LogError("%T", "Log Error", LANG_SERVER);
-	}
-}
-
-bool:IsClientAdmin(client)
-{
-	// If the client has the ban flag, return true
-	if (CheckCommandAccess(client, "admin_ban", ADMFLAG_BAN, false))
-	{
-		return true;
-	}
-
-	// If the client does not, return false
-	else
-	{
-		return false;
 	}
 }

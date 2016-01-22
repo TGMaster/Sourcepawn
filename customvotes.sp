@@ -113,6 +113,7 @@ new Handle:sm_cvote_minpercent = INVALID_HANDLE;
 new Handle:sm_cvote_minvotes = INVALID_HANDLE;
 new Handle:sm_cvote_adminonly = INVALID_HANDLE;
 new Handle:sm_vote_delay = INVALID_HANDLE;
+new Handle:g_hBlockCount;
 
 // Vote lookup tables
 new Handle:g_voteArray = INVALID_HANDLE;
@@ -144,6 +145,10 @@ new g_configParam = -1;
 new g_configParamsUsed = 0;
 new g_configVote[CVote];
 
+// Set up integer for tracking block count of each client
+new g_iBlockCount[MAXPLAYERS+1] = 0;
+new g_iBlockReturn[MAXPLAYERS+1] = 0;
+
 public Plugin:myinfo = {
 	name = "Player Menu Votes",
 	author = "chundo & Blazers Team",
@@ -169,6 +174,10 @@ public OnPluginStart() {
 	sm_cvote_adminonly = CreateConVar("sm_cvote_adminonly", "0", "Only admins can initiate votes (except chat votes.)", FCVAR_PLUGIN);
 	sm_vote_delay = FindConVar("sm_vote_delay");
 
+	g_hBlockCount = CreateConVar("l4d2_blockcount", "3", "0 - Disable blocked vote limit for clients, n - Maximum number of blocked votes per client per map before they are kicked",	FCVAR_PLUGIN, true, 0.0, true, 10.0);
+
+	
+	
 	RegAdminCmd("sm_cvote", Command_CustomVote, ADMFLAG_GENERIC, "Initiate a vote, or list available votes", "customvotes", FCVAR_PLUGIN);
 	RegAdminCmd("sm_cvote_reload", Command_ReloadConfig, ADMFLAG_GENERIC, "Reload vote configuration", "customvotes", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_votemenu", Command_VoteMenu, "List available votes", FCVAR_PLUGIN);
@@ -251,6 +260,13 @@ public OnClientDisconnect(client) {
 		}
 	}
 	RemoveExpiredStatuses();
+}
+
+public OnClientDisconnect_Post(client)
+{
+	// Reset the client's block count when they disconnect (also called when a map changes)
+	g_iBlockCount[client] = 0;
+	g_iBlockReturn[client] = 0;
 }
 
 public OnMapStart() {
@@ -677,7 +693,7 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 		ReplyToCommand(client, "[SM] %t", "No Access");
 		return;
 	}
-
+	
 	new String:errormsg[128];
 	if (!IsVoteAllowed(client, voteidx, fromtrigger, errormsg, sizeof(errormsg))) {
 		ReplyToCommand(client, "[SM] %s", errormsg);
@@ -900,6 +916,18 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 
 		LogAction(client, -1, "%L initiated a %s vote", client, cvote[names]);
 		CPrintToChatAllEx(client, "{teamcolor}%N {default}called a custom vote.", client);
+		
+		if (GetConVarInt(g_hBlockCount) > 0)
+		{
+			g_iBlockCount[client]++;
+			
+			// If they have reached the limit for blocked votes, kick them
+			if (g_iBlockCount[client] >= GetConVarInt(g_hBlockCount))
+			{
+				KickClient(client, "Stop calling gay votes.");
+			}
+		}
+		
 		SetVoteResultCallback(vm, CVote_VoteHandler);
 		new iNumPlayers;
 		decl iPlayers[MaxClients];

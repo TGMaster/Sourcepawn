@@ -33,7 +33,7 @@ public OnPluginStart()
 	
 	CreateConVar("l4d_sm_respawn_version", PLUGIN_VERSION, "L4D SM Respawn Version", FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_NOTIFY);
 	RegAdminCmd("sm_respawn", Command_Respawn, ADMFLAG_BAN, "sm_respawn <player1> [player2] ... [playerN] - respawn all listed players and teleport them where you aim");
-	RegAdminCmd("sm_respawn2", Command_Revive, ADMFLAG_BAN, "sm_respawn2 <player1> [player2] ... [playerN] - revive all listed players and teleport them to alive survivor");
+	RegConsoleCmd("sm_respawn2", Command_Revive, "sm_respawn2 <player1> [player2] ... [playerN] - revive all listed players and teleport them to alive survivor");
 	
 	if (hGameConf != INVALID_HANDLE)
 	{
@@ -145,14 +145,18 @@ public Action:Command_Respawn(client, args)
 	return Plugin_Handled;
 }
 
-static RevivePlayer(client, player_id)
+RevivePlayer(client, target)
 {
-	if (client > 0 && IsClientInGame(client) && GetClientTeam(client) == 2 && !IsFakeClient(client))
+	if (target > 0 && IsClientInGame(target) && GetClientTeam(target) == 2 && !IsFakeClient(target))
 	{
-		SDKCall(hRoundRespawn, player_id);
-		CheatCommand(player_id, "give", "smg_silenced");
-		CheatCommand(player_id, "give", "first_aid_kit");
-		Teleport(player_id);
+		if (!IsPlayerAlive(target))	
+		{	
+			SDKCall(hRoundRespawn, target);
+			CheatCommand(target, "give", "smg_silenced");
+			CheatCommand(target, "give", "first_aid_kit");
+			Teleport(target);
+			LogAction(client, target, "\"%L\" revived \"%L\"", client, target);
+		}
 	}
 }
 
@@ -162,16 +166,19 @@ static RespawnPlayer(client, player_id)
 	{
 		case 2:
 		{
-			new bool:canTeleport = SetTeleportEndPoint(client);
-		
-			SDKCall(hRoundRespawn, player_id);
-			
-			CheatCommand(player_id, "give", "first_aid_kit");
-			CheatCommand(player_id, "give", "smg");
-			
-			if(canTeleport)
+			if (!IsPlayerAlive(player_id))
 			{
-				PerformTeleport(client,player_id,g_pos);
+				new bool:canTeleport = SetTeleportEndPoint(client);
+			
+				SDKCall(hRoundRespawn, player_id);
+				
+				CheatCommand(player_id, "give", "first_aid_kit");
+				CheatCommand(player_id, "give", "smg");
+				
+				if(canTeleport)
+				{
+					PerformTeleport(client,player_id,g_pos);
+				}
 			}
 		}
 		
