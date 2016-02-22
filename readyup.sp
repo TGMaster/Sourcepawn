@@ -26,7 +26,7 @@ enum L4D2Team
 
 // Game Cvars
 new Handle:god;
-new Handle:sb_stop;
+new Handle:sb_move;
 new Handle:liveForward;
 new bool:inReadyUp;
 new bool:blockSecretSpam[MAXPLAYERS + 1];
@@ -42,12 +42,10 @@ public OnPluginStart()
 	HookEvent("round_start", RoundStart_Event, EventHookMode_Post);
 	
 	god = FindConVar("god");
-	sb_stop = FindConVar("sb_stop");
+	sb_move = FindConVar("sb_move");
 	
 	RegConsoleCmd("sm_return", Return_Cmd, "Return to a valid saferoom spawn if you get stuck");
 	RegConsoleCmd("sm_secret", Secret_Cmd, "Every player has a different secret number between 0-1023");
-	
-	LoadTranslations("common.phrases");
 	
 }
 
@@ -124,7 +122,7 @@ InitiateReadyUp()
 	SetConVarFlags(god, GetConVarFlags(god) & ~FCVAR_NOTIFY);
 	SetConVarBool(god, true);
 	SetConVarFlags(god, GetConVarFlags(god) | FCVAR_NOTIFY);
-	SetConVarBool(sb_stop, true);
+	SetConVarBool(sb_move, false);
 	
 	L4D2_CTimerStart(L4D2CT_VersusStartTimer, 99999.9);
 	
@@ -137,7 +135,7 @@ InitiateLive(bool:real = true)
 	SetConVarFlags(god, GetConVarFlags(god) & ~FCVAR_NOTIFY);
 	SetConVarBool(god, false);
 	SetConVarFlags(god, GetConVarFlags(god) | FCVAR_NOTIFY);
-	SetConVarBool(sb_stop, false);
+	SetConVarBool(sb_move, true);
 	
 	L4D2_CTimerStart(L4D2CT_VersusStartTimer, 60.0);
 	if (real)

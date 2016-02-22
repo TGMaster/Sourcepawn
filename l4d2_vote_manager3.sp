@@ -3,7 +3,7 @@
 #include <sdktools>
 #include <colors>
 
-#define PLUGIN_VERSION "1.3.6"
+#define PLUGIN_VERSION "1.3.7"
 
 #define VOTE_NONE 0
 #define VOTE_POLLING 1
@@ -307,7 +307,7 @@ public Action:VoteStart(client, const String:command[], argc)
 					else
 					{
 						LogVoteManager("%T", "Vote Called", LANG_SERVER, sCaller, sIssue);
-						CPrintToChatAllEx(client, "%t", "Vote Called", sCaller);
+						CPrintToChatAllEx(client, "%t", "Vote Called", sCaller, sIssue);
 						VoteLogAction(client, -1, "'%L' callvote (issue '%s')", client, sIssue);
 					}
 				}
@@ -670,7 +670,7 @@ stock Action:ClientCanKick(client, const String:userid[])
 		if(!CanAdminTarget(id, targetid))
 		{
 			LogVoteManager("%T", "Kick Vote Call Failed", LANG_SERVER, client, target);
-			CPrintToChatAllEx(client, "%t", "Kick Vote Call Failed", client, target);
+			CPrintToChatEx(target, client, "%t", "Kick Vote Call Failed", client, target);
 			VoteLogAction(client, -1, "'%L' callvote kick denied (reason: '%L has higher immunity')", client, target);
 			ClearVoteStrings();
 			return Plugin_Handled;
@@ -680,7 +680,7 @@ stock Action:ClientCanKick(client, const String:userid[])
 	if(CheckCommandAccess(target, "kick_immunity", 0, true) && !CheckCommandAccess(client, "kick_immunity", 0, true))
 	{
 		LogVoteManager("%T", "Kick Immunity", LANG_SERVER, client, target);
-		CPrintToChatAllEx(client, "%t", "Kick Immunity", client, target);
+		CPrintToChatEx(target, client, "%t", "Kick Immunity", client, target);
 		VoteLogAction(client, -1, "'%L' callvote kick denied (reason: '%L has kick vote immunity')", client, target);
 		ClearVoteStrings();
 		return Plugin_Handled;
@@ -697,7 +697,16 @@ stock Action:ClientCanKick(client, const String:userid[])
 		}
 	}
 	LogVoteManager("%T", "Kick Vote", LANG_SERVER, client, target);
-	CPrintToChatAllEx(client, "%t", "Kick Vote", client, target);
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i) && !IsFakeClient(i))
+		{
+			if (GetClientTeam(i) == cTeam)
+				CPrintToChatEx(i, client, "%t", "Kick Vote", client, target);
+			else if (GetClientTeam(i) != cTeam)
+				CPrintToChat(i, "{red}The other team is voting to kick {default}%N", target);
+		}	
+	}
 	VoteLogAction(client, -1, "'%L' callvote kick started (kickee: '%L')", client, target);
 	VoteManagerPrepareVoters(cTeam);
 	VoteManagerHandleCooldown(client);

@@ -268,16 +268,18 @@ public Event_AbilityUse(Handle:event, const String:name[], bool:dontBroadcast)
 
 public Action: Timer_GroundTouch(Handle:timer, any:client)
 {
-    if (IsClientAndInGame(client) && (IsGrounded(client)) || !IsPlayerAlive(client))
-    {
-        // Reached the ground or died in mid-air
-		if (IsClientInGame(client)) {
-			bIsPouncing[client] = false;
-			return Plugin_Stop;
+	if (IsClientInGame(client)) {
+		if (IsClientAndInGame(client) && (IsGrounded(client)) || !IsPlayerAlive(client))
+		{
+			// Reached the ground or died in mid-air
+			if (IsClientInGame(client)) {
+				bIsPouncing[client] = false;
+				return Plugin_Stop;
+			}
 		}
-    }
-    
-    return Plugin_Continue;
+	}
+	
+	return Plugin_Continue;
 }
 
 public bool:IsGrounded(client)
@@ -287,7 +289,7 @@ public bool:IsGrounded(client)
 
 bool:IsClientAndInGame(index)
 {
-    if (index > 0 && index < MaxClients)
+    if (0 < index < MaxClients)
     {
         return IsClientInGame(index);
     }

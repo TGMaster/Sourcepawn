@@ -2,6 +2,7 @@
 #include <sdktools>
 #include <adminmenu>
 #include <builtinvotes>
+#define VOTE_YES "###yes###"
 
 //Global Vars
 new Handle:g_hModVote = INVALID_HANDLE;
@@ -51,7 +52,7 @@ public OnPluginStart()
 	//Set g_lastMap to something random so that when plugin first starts it registers it as a new campaign
 	strcopy( g_lastCampaign, sizeof(g_lastCampaign),"100 Narwhals on the wall");
 	
-    	HookEvent("round_start", _RoundStart);	
+	HookEvent("round_start", _RoundStart);
 }
 
 public _RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
@@ -107,7 +108,7 @@ DisableDefaultDisabledPlugins()
 	{
 		if( strlen(g_DefaultDisabled[i]) > 1 )
 		{
-			strcopy(cmd,sizeof(cmd),"sm plugins unload optional/coop/");
+			strcopy(cmd,sizeof(cmd),"sm plugins unload ");
 			StrCat(cmd,sizeof(cmd),g_DefaultDisabled[i]);
 			ServerCommand(cmd);
 			g_pluginStates[i] = 0;
@@ -174,22 +175,17 @@ VoteModConfirm(client,plId)
     {
     	strcopy(menuTitle,sizeof(menuTitle),"Vote To Turn ON ");
     	StrCat(menuTitle,sizeof(menuTitle),plName);
-		StrCat(menuTitle,sizeof(menuTitle)," ?");
     }
     else
     {
     	strcopy(menuTitle,sizeof(menuTitle),"Vote To Turn OFF ");
     	StrCat(menuTitle,sizeof(menuTitle),plName);
-		StrCat(menuTitle,sizeof(menuTitle)," ?");
     }
-    
-    SetMenuTitle(menu, menuTitle);
-    
+	SetMenuTitle(menu, menuTitle);
 	AddMenuItem(menu, "1", "Sure", ITEMDRAW_DEFAULT);
-    AddMenuItem(menu, "0", "Not sure", ITEMDRAW_DEFAULT);
-    
-    SetMenuExitButton(menu, true);
-    DisplayMenu(menu, client, MENU_TIME_FOREVER);
+	AddMenuItem(menu, "0", "Not sure", ITEMDRAW_DEFAULT);
+	SetMenuExitButton(menu, true);
+	DisplayMenu(menu, client, MENU_TIME_FOREVER);
 }
 
 public ModsMenuHandler(Handle:menu, MenuAction:action, client, itemNum)
@@ -248,11 +244,11 @@ public DisplayModVote(client)
 		
 		if( g_pluginStates[g_pluginIdInVote] == 0 )
 		{
-			Format(sBuffer, sizeof(sBuffer), "Turn ON '%s'?", plName);
+			Format(sBuffer, sizeof(sBuffer), "Turn ON %s ?", plName);
 		}
 		else
 		{
-			Format(sBuffer, sizeof(sBuffer), "Turn OFF '%s'?", plName);
+			Format(sBuffer, sizeof(sBuffer), "Turn OFF %s ?", plName);
 		}		
 		
 		SetBuiltinVoteArgument(g_hModVote, sBuffer);
@@ -314,8 +310,8 @@ ChangeMod(bool:Enable)
 	decl String:loadString[88];
 	decl String:unloadString[88];
 	
-	strcopy(loadString,sizeof(loadString),"sm plugins load optional/coop/");
-	strcopy(unloadString,sizeof(unloadString),"sm plugins unload optional/coop/");
+	strcopy(loadString,sizeof(loadString),"sm plugins load ");
+	strcopy(unloadString,sizeof(unloadString),"sm plugins unload ");
 	
 	GetModFilename(g_pluginIdInVote,plFilename,sizeof(plFilename));
 	

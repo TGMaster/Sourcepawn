@@ -16,7 +16,7 @@
 new Handle:hAllTalk;
 
 
-#define PLUGIN_VERSION "2.1.4"
+#define PLUGIN_VERSION "2.1.5"
 public Plugin:myinfo = 
 {
 	name = "SpecLister",
@@ -37,7 +37,7 @@ public Plugin:myinfo =
 	HookConVarChange(hAllTalk, OnAlltalkChange);
 	
 	//Spectators hear Team_Chat
-	RegConsoleCmd("say_team", Command_SayTeam);
+	AddCommandListener(Command_SayTeam, "say_team");
 
 }
 public PanelHandler1(Handle:menu, MenuAction:action, param1, param2)
@@ -80,10 +80,10 @@ public Action:Panel_hear(client,args)
 
 }
 
-public Action:Command_SayTeam(client, args)
+public Action:Command_SayTeam(client, const String:command[], argc)
 {
 	if (client == 0)
-		return Plugin_Continue;
+		return Plugin_Handled;
 		
 	new String:buffermsg[256];
 	new String:text[192];
@@ -91,11 +91,9 @@ public Action:Command_SayTeam(client, args)
 	new senderteam = GetClientTeam(client);
 	
 	if(FindCharInString(text, '@') == 0)	//Check for admin messages
-		return Plugin_Continue;
-	if(FindCharInString(text, '!') == 0)	//Check for command messages
-		return Plugin_Continue;
-	if(FindCharInString(text, '/') == 0)	//Check for command messages
-		return Plugin_Continue;
+		return Plugin_Handled;
+	if(text[0] == '!' || text[0] == '/')	// Hidden command or chat trigger
+		return Plugin_Handled;
 	
 	new startidx = trim_quotes(text);  //Not sure why this function is needed.(bman)
 	
@@ -123,9 +121,9 @@ public Action:Command_SayTeam(client, args)
 				switch (senderteam)	//Format the color different depending on team
 				{
 					case 3:
-						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} : %s", senderTeamName, name, text[startidx]);
+						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} :  %s", senderTeamName, name, text[startidx]);
 					case 2:
-						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} : %s", senderTeamName, name, text[startidx]);
+						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} :  %s", senderTeamName, name, text[startidx]);
 				}
 				//Format(buffermsg, 256, "\x01(TEAM-%s) \x03%s\x05: %s", senderTeamName, name, text[startidx]);
 				CPrintToChatEx(i, client, buffermsg);	//Send the message to spectators
@@ -154,26 +152,23 @@ public trim_quotes(String:text[])
 
 public Event_PlayerChangeTeam(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	new userID = GetClientOfUserId(GetEventInt(event, "userid"));
+	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	new userTeam = GetEventInt(event, "team");
-	if(userID==0)
+	if(client==0)
 		return ;
 
 	//PrintToChat(userID,"\x02X02 \x03X03 \x04X04 \x05X05 ");\\ \x02:color:default \x03:lightgreen \x04:orange \x05:darkgreen
 	
-	if(userTeam==TEAM_SPEC && IsValidClient(userID))
+	if(userTeam==TEAM_SPEC && IsValidClient(client))
 	{
-		SetClientListeningFlags(userID, VOICE_LISTENALL);
-		PrintToChat(userID,"\x03[Voice] \x01You can turn off voice by typing \x04!hear \x01in chat." )
-		
+		SetClientListeningFlags(client, VOICE_LISTENALL);
 	}
 	else
 	{
-		SetClientListeningFlags(userID, VOICE_NORMAL);
-		//PrintToChat(userID,"\x04[listen]\x03disable" )
+		SetClientListeningFlags(client, VOICE_NORMAL);
 	}
 }
-
+	
 public OnAlltalkChange(Handle:convar, const String:oldValue[], const String:newValue[])
 {
 	if (StringToInt(newValue) == 0)
@@ -222,4 +217,4 @@ public IsValidClient (client)
         return false;	
 		
     return true;
-}  
+} 

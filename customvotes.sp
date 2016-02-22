@@ -60,6 +60,7 @@ enum CVote {
 	delay,
 	triggerdelay,
 	mapdelay,
+	team,
 	String:target[32],
 	String:execute[128],
 	CVoteType:type,
@@ -444,6 +445,8 @@ public SMCResult:Config_KeyValue(Handle:parser, const String:key[], const String
 				g_configVote[triggerdelay] = StringToInt(value);
 			else if(strcmp(key, "mapdelay", false) == 0)
 				g_configVote[mapdelay] = StringToInt(value);
+			else if(strcmp(key, "team", false) == 0)
+				g_configVote[team] = StringToInt(value);
 			else if(strcmp(key, "percent", false) == 0)
 				g_configVote[percent] = StringToInt(value);
 			else if(strcmp(key, "abspercent", false) == 0)
@@ -931,14 +934,25 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 		SetVoteResultCallback(vm, CVote_VoteHandler);
 		new iNumPlayers;
 		decl iPlayers[MaxClients];
+		
 		//list of non-spectators players
 		for (new i=1; i<=MaxClients; i++)
 		{
-			if (!IsClientInGame(i) || IsFakeClient(i) || (GetClientTeam(i) == 1))
+			if (!IsClientInGame(i) || IsFakeClient(i) || GetClientTeam(i) == 1)
 			{
 				continue;
 			}
-			iPlayers[iNumPlayers++] = i;
+			
+			if (cvote[team] == 1)
+			{
+				if (GetClientTeam(i) != GetClientTeam(client)
+					continue;
+				else if (GetClientTeam(i) == GetClientTeam(client))
+					iPlayers[iNumPlayers++] = i;
+			}
+			
+			else
+				iPlayers[iNumPlayers++] = i;
 		}
 		VoteMenu(vm, iPlayers, iNumPlayers, 30);
 	}
@@ -1666,6 +1680,7 @@ ResetVoteCache(cvote[CVote]) {
 	cvote[delay] = 0;
 	cvote[triggerdelay] = 0;
 	cvote[mapdelay] = 0;
+	cvote[team] = 0;
 	cvote[percent] = GetConVarInt(sm_cvote_minpercent);
 	cvote[abspercent] = 0;
 	cvote[votes] = GetConVarInt(sm_cvote_minvotes);
