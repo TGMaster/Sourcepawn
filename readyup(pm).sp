@@ -83,6 +83,7 @@ new bool:blockSecretSpam[MAXPLAYERS + 1];
 new String:liveSound[256];
 
 new Handle:allowedCastersTrie;
+new tg;
 
 new String:countdownSound[MAX_SOUNDS][]=
 {
@@ -165,6 +166,7 @@ public OnPluginEnd()
 
 public OnMapStart()
 {
+	tg = 0;
 	/* OnMapEnd needs this to work */
 	GetConVarString(l4d_ready_live_sound, liveSound, sizeof(liveSound));
 	PrecacheSound("/level/gnomeftw.wav");
@@ -616,15 +618,24 @@ UpdatePanel()
 		}
 	}
 	decl String:cfgBuf[128];
-	char sBuffer[256];
 	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
-	ConVar hndl = FindConVar("hostname");
-	hndl.GetString(sBuffer, sizeof(sBuffer));
-	DrawPanelText(menuPanel, sBuffer);
-	//DrawPanelText(menuPanel, cfgBuf);
-	DrawPanelText(menuPanel, " ");
+	DrawPanelText(menuPanel, cfgBuf);
+	decl String:buffer[512];
+	Format(buffer, sizeof(buffer), "Slots %i/%i | Tickrate %i", GetRealClientCount(), GetConVarInt(FindConVar("sv_maxplayers")), RoundToNearest(1.0 / GetTickInterval()));
+	DrawPanelText(menuPanel, buffer);
 	DrawPanelText(menuPanel, "☐ Addons: [✘] | Scripts: [✘]");
-	DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !marry");
+	tg += 1;
+	if (tg == 1)
+		DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !marry");
+	else if (tg == 2)
+		DrawPanelText(menuPanel, "★ Supported by TG ★");
+	else if (tg == 3)
+		DrawPanelText(menuPanel, "Server: Blazers SG");
+	else if (tg == 4)
+	{
+		tg = 0;
+		DrawPanelText(menuPanel, "It works!");
+	}
 	DrawPanelText(menuPanel, " ");
 	new bufLen = strlen(readyBuffer);
 	if (bufLen != 0)
@@ -1003,4 +1014,14 @@ MakePropsBreakable() {
       }
       DispatchKeyValueFloat(iEntity, "minhealthdmg", 5.0);
     }
+}
+
+GetRealClientCount() 
+{
+	new clients = 0;
+	for (new i = 1; i <= MaxClients; i++) 
+	{
+		if (IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) clients++;
+	}
+	return clients;
 }

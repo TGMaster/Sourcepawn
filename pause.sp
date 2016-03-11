@@ -384,6 +384,8 @@ UpdatePanel()
 	menuPanel = CreatePanel();
 
 	DrawPanelText(menuPanel, "Team Status");
+	DrawPanelText(menuPanel, "☐ !r = ready | !nr = unready");
+	DrawPanelText(menuPanel, " ");
 	DrawPanelText(menuPanel, teamReady[L4D2Team_Survivor] ? "->1. Survivors: [✔]" : "->1. Survivors: [✘]");
 	DrawPanelText(menuPanel, teamReady[L4D2Team_Infected] ? "->2. Infected: [✔]" : "->2. Infected: [✘]");
 
