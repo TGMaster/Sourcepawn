@@ -615,7 +615,17 @@ UpdatePanel()
 			}
 		}
 	}
-
+	decl String:cfgBuf[128];
+	char sBuffer[256];
+	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
+	ConVar hndl = FindConVar("hostname");
+	hndl.GetString(sBuffer, sizeof(sBuffer));
+	DrawPanelText(menuPanel, sBuffer);
+	//DrawPanelText(menuPanel, cfgBuf);
+	DrawPanelText(menuPanel, " ");
+	DrawPanelText(menuPanel, "☐ Addons: [✘] | Scripts: [✘]");
+	DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !marry");
+	DrawPanelText(menuPanel, " ");
 	new bufLen = strlen(readyBuffer);
 	if (bufLen != 0)
 	{
@@ -646,10 +656,6 @@ UpdatePanel()
 			FormatEx(specBuffer, sizeof(specBuffer), "->1. Many (%d)", specCount);
 		DrawPanelText(menuPanel, specBuffer);
 	}
-
-	decl String:cfgBuf[128];
-	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
-	DrawPanelText(menuPanel, cfgBuf);
 
 	for (new i = 0; i < MAX_FOOTERS; i++)
 	{

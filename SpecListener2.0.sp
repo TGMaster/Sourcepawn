@@ -80,27 +80,27 @@ public Action:Panel_hear(client,args)
 
 }
 
-public Action:Command_SayTeam(client, const String:command[], argc)
+public Action:Command_SayTeam(client, const char[] command, args)
 {
 	if (client == 0)
 		return Plugin_Handled;
 		
-	new String:buffermsg[256];
-	new String:text[192];
+	char buffermsg[256];
+	char text[4096];
 	GetCmdArgString(text, sizeof(text));
 	new senderteam = GetClientTeam(client);
 	
 	if(FindCharInString(text, '@') == 0)	//Check for admin messages
-		return Plugin_Handled;
-	if(text[0] == '!' || text[0] == '/')	// Hidden command or chat trigger
+		return Plugin_Continue;
+	if(text[1] == '!' || text[1] == '/')	// Hidden command or chat trigger
 		return Plugin_Handled;
 	
 	new startidx = trim_quotes(text);  //Not sure why this function is needed.(bman)
 	
-	new String:name[32];
-	GetClientName(client,name,31);
+	char name[128];
+	GetClientName(client,name,sizeof(name));
 	
-	new String:senderTeamName[10];
+	char senderTeamName[10];
 	switch (senderteam)
 	{
 		case 3:
