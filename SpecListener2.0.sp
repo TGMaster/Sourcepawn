@@ -16,7 +16,7 @@
 new Handle:hAllTalk;
 
 
-#define PLUGIN_VERSION "2.1.5"
+#define PLUGIN_VERSION "2.2"
 public Plugin:myinfo = 
 {
 	name = "SpecLister",
@@ -82,23 +82,23 @@ public Action:Panel_hear(client,args)
 
 public Action:Command_SayTeam(client, const char[] command, args)
 {
-	if (client == 0)
-		return Plugin_Handled;
-		
-	char buffermsg[256];
 	char text[4096];
 	GetCmdArgString(text, sizeof(text));
 	new senderteam = GetClientTeam(client);
 	
+	/*
 	if(FindCharInString(text, '@') == 0)	//Check for admin messages
 		return Plugin_Continue;
 	if(text[1] == '!' || text[1] == '/')	// Hidden command or chat trigger
-		return Plugin_Handled;
-	
+		return Plugin_Continue;
 	new startidx = trim_quotes(text);  //Not sure why this function is needed.(bman)
+	*/
 	
-	char name[128];
-	GetClientName(client,name,sizeof(name));
+	StripQuotes(text);
+	if (IsChatTrigger() && text[0] == '/' || text[0] == '!' || text[0] == '@')  // Hidden command or chat trigger
+	{
+		return Plugin_Continue;
+	}
 	
 	char senderTeamName[10];
 	switch (senderteam)
@@ -112,34 +112,32 @@ public Action:Command_SayTeam(client, const char[] command, args)
 	}
 	
 	//Is not console, Sender is not on Spectators, and there are players on the spectator team
-	if (client > 0 && senderteam != TEAM_SPEC && GetTeamClientCount(TEAM_SPEC) > 0)
+	if (client == 0)
+		PrintToChatAll("Console : %s", text);
+	else if (senderteam != TEAM_SPEC && GetTeamClientCount(TEAM_SPEC) > 0)
 	{
 		for (new i = 1; i <= GetMaxClients(); i++)
 		{
 			if (IsClientInGame(i) && GetClientTeam(i) == TEAM_SPEC)
 			{
-				switch (senderteam)	//Format the color different depending on team
-				{
-					case 3:
-						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} :  %s", senderTeamName, name, text[startidx]);
-					case 2:
-						Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} :  %s", senderTeamName, name, text[startidx]);
-				}
+				//Format(buffermsg, 256, "{default}(%s) {teamcolor}%s{olive} :  %s", senderTeamName, name, text[startidx]);
 				//Format(buffermsg, 256, "\x01(TEAM-%s) \x03%s\x05: %s", senderTeamName, name, text[startidx]);
-				CPrintToChatEx(i, client, buffermsg);	//Send the message to spectators
+				//CPrintToChatEx(i, client, buffermsg);	//Send the message to spectators
+				
+				CPrintToChatEx(i, client, "{default}(%s) {teamcolor}%N{default} : {olive} %s", senderTeamName, client, text);
 			}
 		}
 	}
 	return Plugin_Continue;
 }
-
+/*
 public trim_quotes(String:text[])
 {
 	new startidx = 0
 	if (text[0] == '"')
 	{
 		startidx = 1
-		/* Strip the ending quote, if there is one */
+		// Strip the ending quote, if there is one
 		new len = strlen(text);
 		if (text[len-1] == '"')
 		{
@@ -149,7 +147,7 @@ public trim_quotes(String:text[])
 	
 	return startidx
 }
-
+*/
 public Event_PlayerChangeTeam(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));

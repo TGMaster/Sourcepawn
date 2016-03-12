@@ -83,7 +83,7 @@ new bool:blockSecretSpam[MAXPLAYERS + 1];
 new String:liveSound[256];
 
 new Handle:allowedCastersTrie;
-new tg;
+int tg;
 
 new String:countdownSound[MAX_SOUNDS][]=
 {
@@ -617,24 +617,20 @@ UpdatePanel()
 			}
 		}
 	}
-	decl String:cfgBuf[128];
+	decl String:sBuffer[64];
+	decl String:cfgBuf[512];
 	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
+	Format(cfgBuf, sizeof(cfgBuf), "%s (%s round)", cfgBuf, (InSecondHalfOfRound() ? "2nd" : "1st"));
 	DrawPanelText(menuPanel, cfgBuf);
-	decl String:buffer[512];
-	Format(buffer, sizeof(buffer), "Slots %i/%i | Tickrate %i", GetRealClientCount(), GetConVarInt(FindConVar("sv_maxplayers")), RoundToNearest(1.0 / GetTickInterval()));
-	DrawPanelText(menuPanel, buffer);
+	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
+	Format(sBuffer, sizeof(sBuffer), "Time: %s", sBuffer);
+	DrawPanelText(menuPanel, sBuffer);
+	
 	DrawPanelText(menuPanel, "☐ Addons: [✘] | Scripts: [✘]");
-	tg += 1;
-	if (tg == 1)
-		DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !marry");
-	else if (tg == 2)
-		DrawPanelText(menuPanel, "★ Supported by TG ★");
-	else if (tg == 3)
-		DrawPanelText(menuPanel, "Server: Blazers SG");
-	else if (tg == 4)
+	PrintAnimatedWords(); //Server Name, Instructor
+	for (new i = 0; i < MAX_FOOTERS; i++)
 	{
-		tg = 0;
-		DrawPanelText(menuPanel, "It works!");
+		DrawPanelText(menuPanel, readyFooter[i]);
 	}
 	DrawPanelText(menuPanel, " ");
 	new bufLen = strlen(readyBuffer);
@@ -666,11 +662,6 @@ UpdatePanel()
 		if (playerCount > GetConVarInt(l4d_ready_max_players))
 			FormatEx(specBuffer, sizeof(specBuffer), "->1. Many (%d)", specCount);
 		DrawPanelText(menuPanel, specBuffer);
-	}
-
-	for (new i = 0; i < MAX_FOOTERS; i++)
-	{
-		DrawPanelText(menuPanel, readyFooter[i]);
 	}
 
 	for (new client = 1; client <= MaxClients; client++)
@@ -1025,3 +1016,35 @@ GetRealClientCount()
 	}
 	return clients;
 }
+
+PrintAnimatedWords()
+{
+	decl String:info[512];
+	GetConVarString(FindConVar("hostname"), info, sizeof(info));
+	if (tg < 8) tg += 1;
+	if (tg == 1)
+		DrawPanelText(menuPanel, info);
+	else if (tg == 2)
+		DrawPanelText(menuPanel, info);
+	else if (tg == 3)
+		DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !rmatch");
+	else if (tg == 4)
+		DrawPanelText(menuPanel, "☐ Cmds: !hide, !show, !votemenu, !rmatch");
+	else if (tg == 5)
+		DrawPanelText(menuPanel, "☐ Games: !snake, !pong");
+	else if (tg == 6)
+		DrawPanelText(menuPanel, "☐ Games: !snake, !pong");
+	else if (tg == 7)
+		DrawPanelText(menuPanel, "★ Good luck and have fun ★");
+	else if (tg == 8)
+	{
+		DrawPanelText(menuPanel, "★ Good luck and have fun ★");
+		tg = 0;
+	}
+}
+
+InSecondHalfOfRound()
+{
+	return GameRules_GetProp("m_bInSecondHalfOfRound");
+}
+		

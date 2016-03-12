@@ -460,7 +460,7 @@ public Action:Say_Callback(client, const String:command[], argc)
 		}
 		else
 		{
-			CPrintToChatAllEx(client, "{teamcolor}%N{default} : %s", client, buffer);
+			CPrintToChatAllEx(client, "{teamcolor}%N{default} :  %s", client, buffer);
 		}
 		return Plugin_Handled;
 	}
