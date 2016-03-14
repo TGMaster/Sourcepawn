@@ -52,7 +52,7 @@ new bool:bSpecHudActive[MAXPLAYERS + 1];
 new bool:bSpecHudHintShown[MAXPLAYERS + 1];
 new bool:bTankHudActive[MAXPLAYERS + 1];
 new bool:bTankHudHintShown[MAXPLAYERS + 1];
-int tg;
+new tg;
 
 public Plugin:myinfo = 
 {
@@ -80,11 +80,6 @@ public OnClientAuthorized(client, const String:auth[])
 	bSpecHudHintShown[client] = true;
 	bTankHudActive[client] = true;
 	bTankHudHintShown[client] = false;
-}
-
-public OnMapStart()
-{
-	tg = 0;
 }
 
 public Action:ToggleSpecHudCmd(client, args) 
@@ -172,16 +167,28 @@ FillHeaderInfo(Handle:hSpecHud)
 	if (GetCurrentGameMode() == L4D2Gamemode_Versus)
 		Format(info, sizeof(info), "%s (%s round)", info, (InSecondHalfOfRound() ? "2nd" : "1st"));
 	DrawPanelText(hSpecHud, info);
+	// Date
+	FormatTime(sBuffer, sizeof(sBuffer), "%d/%m/%Y");
+	Format(sBuffer, sizeof(sBuffer), "Date: %s", sBuffer);
+	DrawPanelText(hSpecHud, sBuffer);
+	// Time
 	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
 	Format(sBuffer, sizeof(sBuffer), "Time: %s", sBuffer);
 	DrawPanelText(hSpecHud, sBuffer);
-	DrawPanelText(hSpecHud, " ");
 	
 	decl String:buffer[512];
 	Format(buffer, sizeof(buffer), "Slots %i/%i | Tickrate %i", GetRealClientCount(), GetConVarInt(FindConVar("sv_maxplayers")), RoundToNearest(1.0 / GetTickInterval()));
 	DrawPanelText(hSpecHud, buffer);
-	DrawPanelText(hSpecHud, "☐ Addons: [✘] | Scripts: [✘]");
-	DrawPanelText(hSpecHud, "☐ Cmds: !spechud, !pong, !snake");
+	if (tg < 4) tg += 1;
+	if (tg == 1 || tg == 2)
+		DrawPanelText(hSpecHud, "☐ Addons: [✘] | Scripts: [✘]");
+	else if (tg == 3)
+		DrawPanelText(hSpecHud, "☐ Cmds: !spechud, !pong, !snake");
+	else if (tg == 4)
+	{
+		DrawPanelText(hSpecHud, "☐ Cmds: !spechud, !pong, !snake");
+		tg = 0;
+	}
 }
 
 GetMeleePrefix(client, String:prefix[], length) 
@@ -426,17 +433,12 @@ FillGameInfo(Handle:hSpecHud)
 		Format(info, sizeof(info), "Current: %i%%", RoundToNearest(GetHighestSurvivorFlow() * 100.0));
 		DrawPanelText(hSpecHud, info);
 
-		if (RoundHasFlowTank() && RoundHasFlowWitch())
-		{
-			Format(info, sizeof(info), "Tank: %i%%, Witch: %i%%", RoundToNearest(GetTankFlow() * 100.0), RoundToNearest(GetWitchFlow() * 100.0));
-			DrawPanelText(hSpecHud, info);
-		}
-		else if (RoundHasFlowTank())
+		if (RoundHasFlowTank())
 		{
 			Format(info, sizeof(info), "Tank: %i%%", RoundToNearest(GetTankFlow() * 100.0));
 			DrawPanelText(hSpecHud, info);
 		}
-		else if (RoundHasFlowWitch())
+		if (RoundHasFlowWitch())
 		{
 			Format(info, sizeof(info), "Witch: %i%%", RoundToNearest(GetWitchFlow() * 100.0));
 			DrawPanelText(hSpecHud, info);

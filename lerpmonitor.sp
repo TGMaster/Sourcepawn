@@ -256,7 +256,7 @@ ProcessPlayerLerp(client) {
 		SetArrayCell(arrayLerps, index + ARRAY_LERP, newLerpTime);
 	}
 	else {
-		PrintToChatAll("\x03%N\x01's lerp set to \x05%.01f", client, newLerpTime*1000);
+		//PrintToChatAll("\x03%N\x01's lerp set to \x05%.01f", client, newLerpTime*1000);
 		
 		// add to array
 		PushArrayString(arrayLerps, steamID);

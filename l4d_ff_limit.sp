@@ -152,13 +152,13 @@ public OnPluginStart()
 	FFGrendmgMin = CreateConVar("l4d_ff_grendmg_min", "20", "(limit > 0) Grenade or Fire damage above this value will still hurt, but will not count against the player's FF limit. any value = Only count this much grendmg, -1 = infinite.",FCVAR_NONE,true,-1.0);
 	FFGrendmgMaxTeam = CreateConVar("l4d_ff_grendmg_max_team", "40", "(limit > 0) Player can deal this much Grenade or Fire damage to Team before the damage is prevented. 0 = infinite.",FCVAR_NONE,true,0.0);
 	FFGrendmgMaxTeammate = CreateConVar("l4d_ff_grendmg_max_teammate", "15", "(limit > 0) Player can deal this much Grenade or Fire damage to Teammate before the damage is prevented. 0 = infinite.",FCVAR_NONE,true,0.0);
-	FFban = CreateConVar("l4d_ff_ban", "0", "0 = don't ban, 1 = Ban only if player reaches Team FF limit (limit = 40+), 2 = Ban whichever comes first (limit = 40+) or (teammate = 30+). Use negative values if you require ban by IP address.",FCVAR_NONE,true,-2.0,true,2.0);
+	FFban = CreateConVar("l4d_ff_ban", "3", "0 = don't ban, 1 = Ban only if player reaches Team FF limit (limit = 40+), 2 = Ban whichever comes first (limit = 40+) or (teammate = 30+), 3 = Kick player only. Use negative values if you require ban by IP address.",FCVAR_NONE,true,-2.0,true,2.0);
 	FFbanduration = CreateConVar("l4d_ff_banduration", "0", "(ban > 0) Ban Duration in minutes. 0 = Don't ban but warn the player if they may be permbanned.",FCVAR_NONE,true,0.0);
 	FFconsecutivebans = CreateConVar("l4d_ff_permban_x", "3", "Valid between 2 to 5. A value of 2 will permanently ban the player on their 2nd offense, etc.",FCVAR_NONE,true,2.0,true,5.0);
 	FFbanexpire = CreateConVar("l4d_ff_permban_y", "30", "(ban > 0) Only count the number of times the player was warned/banned within this many days. 0 = don't perm ban, any other = number of days.",FCVAR_NONE,true,0.0);
 	FFlog = CreateConVar("l4d_ff_log", "1", "Log players that are banned or reach the FF limit (FriendlyFire.log). 0 = Disable, 1 = Enable.",FCVAR_NONE,true,0.0,true,1.0);
 	FFnotify = CreateConVar("l4d_ff_notify", "1", "Notification when players reach the FF limit. 1 = Notify Admins.",FCVAR_NONE,true,0.0,true,1.0);
-	announce = CreateConVar("l4d_ff_announce","1","For Survivors only.  0 = Don't Announce, 1 = Announce Active/Inactive Status (limit = 0) or Announce Limit (limit > 0)",FCVAR_NONE,true,0.0,true,1.0);
+	announce = CreateConVar("l4d_ff_announce","0","For Survivors only.  0 = Don't Announce, 1 = Announce Active/Inactive Status (limit = 0) or Announce Limit (limit > 0)",FCVAR_NONE,true,0.0,true,1.0);
 	gamedifficulty = FindConVar("z_difficulty");
 
 	HookConVarChange(FFlimit,OnCVFFLimitChange);
@@ -444,8 +444,12 @@ public Action:Event_player_hurt(Handle:event, const String:name[], bool:dontBroa
 					// Notify and Ban when a FF limit has been reached
 					if (TotalDamageDoneTA[attacker][0] == g_limit)
 					{
+						// kick player?
+						if (g_limit >= 60 && GetConVarInt(FFban) == 3)
+							KickClient(attacker, "You have reached the Friendly Fire limit");
+							
 						// ban player?
-						if (g_limit >= 40 && GetConVarInt(FFban) != 0)
+						else if (g_limit >= 60 && (GetConVarInt(FFban) == 1 || GetConVarInt(FFban) == 2))
 							BanPlayer(attacker, 0);
 
 						// notify admins

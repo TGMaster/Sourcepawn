@@ -69,6 +69,8 @@ new Handle:l4d_ready_delay;
 new Handle:l4d_ready_blips;
 new bool:playerCantPause[MAXPLAYERS+1];
 new Handle:playerCantPauseTimers[MAXPLAYERS+1];
+new bool:hiddenPanel[MAXPLAYERS + 1];
+int tg;
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
@@ -83,6 +85,8 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 public OnPluginStart()
 {
+	RegConsoleCmd("sm_hide", Hide_Cmd, "Hide team status panel");
+	RegConsoleCmd("sm_show", Show_Cmd, "Show team status panel");
 	RegConsoleCmd("sm_pause", Pause_Cmd, "Pauses the game");
 	RegConsoleCmd("sm_unpause", Unpause_Cmd, "Marks your team as ready for an unpause");
 	RegConsoleCmd("sm_ready", Unpause_Cmd, "Marks your team as ready for an unpause");
@@ -141,8 +145,14 @@ public OnClientPutInServer(client)
 	}
 }
 
+public OnClientDisconnect(client)
+{
+	hiddenPanel[client] = false;
+}
+
 public OnMapStart()
 {
+	tg = 0;
 	PrecacheSound("buttons/blip2.wav");
 }
 
@@ -170,6 +180,18 @@ public PlayerTeam_Event(Handle:event, const String:name[], bool:dontBroadcast)
 	}
 }
 
+public Action:Hide_Cmd(client, args)
+{
+	hiddenPanel[client] = true;
+	return Plugin_Handled;
+}
+
+public Action:Show_Cmd(client, args)
+{
+	hiddenPanel[client] = false;
+	return Plugin_Handled;
+}
+
 public Action:AllowPlayerPause_Timer(Handle:timer, any:client)
 {
 	playerCantPause[client] = false;
@@ -180,7 +202,7 @@ public Action:Pause_Cmd(client, args)
 {
 	if ((!readyUpIsAvailable || !IsInReady()) && pauseDelay == 0 && !isPaused && IsPlayer(client) && !playerCantPause[client])
 	{
-		PrintToChatAll("[SM] \x03%N \x01paused the game!", client);
+		CPrintToChatAll("{lightgreen}%N {default}paused the game!", client);
 		pauseDelay = GetConVarInt(pauseDelayCvar);
 		if (pauseDelay == 0)
 			AttemptPause();
@@ -213,7 +235,7 @@ public Action:Unpause_Cmd(client, args)
 		new L4D2Team:clientTeam = L4D2Team:GetClientTeam(client);
 		if (!teamReady[clientTeam])
 		{
-			PrintToChatAll("[SM] \x03%N \x01marked \x05%s \x01as ready", client, teamString[L4D2Team:GetClientTeam(client)]);
+			CPrintToChatAll("{lightgreen}%N {default}marked {olive}%s {default}as ready!", client, teamString[L4D2Team:GetClientTeam(client)]);
 		}
 		teamReady[clientTeam] = true;
 		if (!adminPause && CheckFullReady())
@@ -231,7 +253,7 @@ public Action:Unready_Cmd(client, args)
 		new L4D2Team:clientTeam = L4D2Team:GetClientTeam(client);
 		if (teamReady[clientTeam])
 		{
-			PrintToChatAll("[SM] \x03%N \x01marked \x05%s \x01as not ready", client, teamString[L4D2Team:GetClientTeam(client)]);
+			CPrintToChatAll("{lightgreen}%N {default}marked {olive}%s {default}as not ready!", client, teamString[L4D2Team:GetClientTeam(client)]);
 		}
 		teamReady[clientTeam] = false;
 		CancelFullReady(client);
@@ -245,7 +267,7 @@ public Action:ToggleReady_Cmd(client, args)
 	{
 		new L4D2Team:clientTeam = L4D2Team:GetClientTeam(client);
 		teamReady[clientTeam] = !teamReady[clientTeam];
-		PrintToChatAll("[SM] \x03%N \x01marked \x05%s \x01as %sready", client, teamString[L4D2Team:GetClientTeam(client)], teamReady[clientTeam] ? "" : "not ");
+		CPrintToChatAll("{lightgreen}%N {default}marked {olive}%s {default}as %sready!", client, teamString[L4D2Team:GetClientTeam(client)], teamReady[clientTeam] ? "" : "not ");
 		if (!adminPause && teamReady[clientTeam] && CheckFullReady())
 		{
 			InitiateLiveCountdown();
@@ -381,17 +403,25 @@ UpdatePanel()
 		menuPanel = INVALID_HANDLE;
 	}
 
+	decl String:sBuffer[64];
 	menuPanel = CreatePanel();
+	
+	FormatTime(sBuffer, sizeof(sBuffer), "%d/%m/%Y");
+	Format(sBuffer, sizeof(sBuffer), "Date: %s", sBuffer);
+	DrawPanelText(menuPanel, sBuffer); //Date
+	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
+	Format(sBuffer, sizeof(sBuffer), "Time: %s (GMT +8)", sBuffer);
+	DrawPanelText(menuPanel, sBuffer); //Time
 
-	DrawPanelText(menuPanel, "Team Status");
-	DrawPanelText(menuPanel, "☐ !r = ready | !nr = unready");
+	PrintAnimatedWords();
 	DrawPanelText(menuPanel, " ");
+	DrawPanelText(menuPanel, "Team Status");
 	DrawPanelText(menuPanel, teamReady[L4D2Team_Survivor] ? "->1. Survivors: [✔]" : "->1. Survivors: [✘]");
 	DrawPanelText(menuPanel, teamReady[L4D2Team_Infected] ? "->2. Infected: [✔]" : "->2. Infected: [✘]");
 
 	for (new client = 1; client <= MaxClients; client++)
 	{
-		if(IsClientInGame(client) && !IsFakeClient(client))
+		if(IsClientInGame(client) && !IsFakeClient(client) && !hiddenPanel[client])
 		{
 			SendPanelToClient(menuPanel, client, DummyHandler, 1);
 		}
@@ -559,4 +589,22 @@ bool:CanPause()
 		}
 	}
 	return true;
+}
+
+PrintAnimatedWords()
+{
+	decl String:info[512];
+	GetConVarString(FindConVar("hostname"), info, sizeof(info));
+	if (tg < 6) tg += 1;
+	if (tg == 1 || tg == 2)
+		DrawPanelText(menuPanel, info);
+	else if (tg == 3 || tg == 4)
+		DrawPanelText(menuPanel, "☐ !hide, !show, !r, !nr");
+	else if (tg == 5)
+		DrawPanelText(menuPanel, "★ Game is pausing ★");
+	else if (tg == 6)
+	{
+		DrawPanelText(menuPanel, "★ Game is pausing ★");
+		tg = 0;
+	}
 }
