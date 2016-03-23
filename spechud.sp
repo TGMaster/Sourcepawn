@@ -173,7 +173,7 @@ FillHeaderInfo(Handle:hSpecHud)
 	DrawPanelText(hSpecHud, sBuffer);
 	// Time
 	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
-	Format(sBuffer, sizeof(sBuffer), "Time: %s", sBuffer);
+	Format(sBuffer, sizeof(sBuffer), "Time: %s (GMT +8)", sBuffer);
 	DrawPanelText(hSpecHud, sBuffer);
 	
 	decl String:buffer[512];
@@ -433,17 +433,13 @@ FillGameInfo(Handle:hSpecHud)
 		Format(info, sizeof(info), "Current: %i%%", RoundToNearest(GetHighestSurvivorFlow() * 100.0));
 		DrawPanelText(hSpecHud, info);
 
-		if (RoundHasFlowTank())
-		{
+		if (RoundHasFlowTank()) {
 			Format(info, sizeof(info), "Tank: %i%%", RoundToNearest(GetTankFlow() * 100.0));
 			DrawPanelText(hSpecHud, info);
-		}
-		if (RoundHasFlowWitch())
-		{
+		} if (RoundHasFlowWitch()) {
 			Format(info, sizeof(info), "Witch: %i%%", RoundToNearest(GetWitchFlow() * 100.0));
 			DrawPanelText(hSpecHud, info);
 		}
-		
 	}
 	else if (GetCurrentGameMode() == L4D2Gamemode_Scavenge)
 	{
