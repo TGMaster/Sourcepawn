@@ -617,25 +617,26 @@ UpdatePanel()
 			}
 		}
 	}
-	decl String:sBuffer[64];
+	decl String:date[64];
+	decl String:time[64];
 	decl String:cfgBuf[512];
 	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
 	Format(cfgBuf, sizeof(cfgBuf), "%s (%s round)", cfgBuf, (InSecondHalfOfRound() ? "2nd" : "1st"));
 	DrawPanelText(menuPanel, cfgBuf);
 	// Date
-	FormatTime(sBuffer, sizeof(sBuffer), "%d/%m/%Y");
-	Format(sBuffer, sizeof(sBuffer), "Date: %s", sBuffer);
-	DrawPanelText(menuPanel, sBuffer);
+	FormatTime(date, sizeof(date), "%d/%m/%Y");
 	// Time
-	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
-	Format(sBuffer, sizeof(sBuffer), "Time: %s (GMT +8)", sBuffer);
-	DrawPanelText(menuPanel, sBuffer);
+	FormatTime(time, sizeof(time), "%H:%M");
+	Format(cfgBuf, sizeof(cfgBuf), "Date: %s | Time: %s", date, time);
+	DrawPanelText(menuPanel, cfgBuf);
 	
 	PrintAnimatedWords(); //Server Name, Instructor
 	for (new i = 0; i < MAX_FOOTERS; i++)
 	{
 		DrawPanelText(menuPanel, readyFooter[i]);
 	}
+	DrawPanelText(menuPanel, " ");
+	
 	new bufLen = strlen(readyBuffer);
 	if (bufLen != 0)
 	{
