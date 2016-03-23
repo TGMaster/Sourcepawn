@@ -71,7 +71,6 @@ new bool:playerCantPause[MAXPLAYERS+1];
 new Handle:playerCantPauseTimers[MAXPLAYERS+1];
 new bool:hiddenPanel[MAXPLAYERS + 1];
 int tg;
-int numb;
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
@@ -109,8 +108,7 @@ public OnPluginStart()
 	pauseDelayCvar = CreateConVar("sm_pausedelay", "0", "Delay to apply before a pause happens.  Could be used to prevent Tactical Pauses", FCVAR_PLUGIN, true, 0.0);
 	l4d_ready_delay = CreateConVar("l4d_ready_delay", "3", "Number of seconds to count down before the round goes live.", FCVAR_PLUGIN, true, 0.0);
 	l4d_ready_blips = CreateConVar("l4d_ready_blips", "1", "Enable beep on unpause");
-	tg = 0; numb = 0;
-	
+
 	HookEvent("round_end", RoundEnd_Event, EventHookMode_PostNoCopy);
 	HookEvent("player_team", PlayerTeam_Event);
 }
@@ -154,7 +152,8 @@ public OnClientDisconnect(client)
 
 public OnMapStart()
 {
-	PrecacheSound("level/bell_normal.wav");
+	tg = 0;
+	PrecacheSound("buttons/blip2.wav");
 }
 
 public RoundEnd_Event(Handle:event, const String:name[], bool:dontBroadcast)
@@ -404,23 +403,17 @@ UpdatePanel()
 		menuPanel = INVALID_HANDLE;
 	}
 
-	decl String:pause[64];
-	numb++;
+	decl String:sBuffer[64];
 	menuPanel = CreatePanel();
 	
-	PrintAnimatedWords(); // Animated Words
-	
-	if (numb < 60)
-		Format(pause, sizeof(pause), "Paused time: %is", numb);
-	else
-	{
-		new min = numb/60;
-		new sec = numb-min*60;
-		
-		Format(pause, sizeof(pause), "Paused time: %im %is", min, sec);
-	}
-	DrawPanelText(menuPanel, pause);
-	
+	FormatTime(sBuffer, sizeof(sBuffer), "%d/%m/%Y");
+	Format(sBuffer, sizeof(sBuffer), "Date: %s", sBuffer);
+	DrawPanelText(menuPanel, sBuffer); //Date
+	FormatTime(sBuffer, sizeof(sBuffer), "%H:%M:%S");
+	Format(sBuffer, sizeof(sBuffer), "Time: %s (GMT +8)", sBuffer);
+	DrawPanelText(menuPanel, sBuffer); //Time
+
+	PrintAnimatedWords();
 	DrawPanelText(menuPanel, " ");
 	DrawPanelText(menuPanel, "Team Status");
 	DrawPanelText(menuPanel, teamReady[L4D2Team_Survivor] ? "->1. Survivors: [✔]" : "->1. Survivors: [✘]");
@@ -466,10 +459,8 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 
 public Action:BlipDelay_Timer(Handle:timer)
 {
-	decl String:round[512];
-	EmitSoundToAll("level/bell_normal.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
-	Format(round, sizeof(round), "%s", (InSecondHalfOfRound() ? "2" : "1"));
-	PrintHintTextToAll("Round (%s/2) ... CONTINUE!", round);
+	EmitSoundToAll("buttons/blip2.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+	PrintHintTextToAll("Round is live!");
 }
 
 CancelFullReady(client)
@@ -602,33 +593,18 @@ bool:CanPause()
 
 PrintAnimatedWords()
 {
-	decl String:date[64];
-	decl String:time[64];
-	FormatTime(date, sizeof(date), "%d/%m/%Y");
-	Format(date, sizeof(date), "Date: %s", date);
-	FormatTime(time, sizeof(time), "%H:%M:%S");
-	Format(time, sizeof(time), "Time: %s", time);
 	decl String:info[512];
 	GetConVarString(FindConVar("hostname"), info, sizeof(info));
-	if (tg < 13) tg++;
+	if (tg < 6) tg += 1;
 	if (tg == 1 || tg == 2)
 		DrawPanelText(menuPanel, info);
 	else if (tg == 3 || tg == 4)
 		DrawPanelText(menuPanel, "☐ !hide, !show, !r, !nr");
-	else if (tg == 5 || tg == 6)
+	else if (tg == 5)
 		DrawPanelText(menuPanel, "★ Game is pausing ★");
-	else if (tg == 7 || tg == 8)
-		DrawPanelText(menuPanel, date); //Date
-	else if (9 <= tg <= 12)
-		DrawPanelText(menuPanel, time); //Time
-	else if (tg == 13)
+	else if (tg == 6)
 	{
-		DrawPanelText(menuPanel, time); //Time
+		DrawPanelText(menuPanel, "★ Game is pausing ★");
 		tg = 0;
 	}
-}
-
-InSecondHalfOfRound()
-{
-	return GameRules_GetProp("m_bInSecondHalfOfRound");
 }
