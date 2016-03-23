@@ -166,7 +166,6 @@ public OnPluginEnd()
 
 public OnMapStart()
 {
-	tg = 0;
 	/* OnMapEnd needs this to work */
 	GetConVarString(l4d_ready_live_sound, liveSound, sizeof(liveSound));
 	PrecacheSound("/level/gnomeftw.wav");
@@ -852,6 +851,7 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 {
 	if (readyDelay == 0)
 	{
+		tg = 0;
 		PrintHintTextToAll("Round is live!");
 		InitiateLive();
 		readyCountdownTimer = INVALID_HANDLE;
