@@ -176,8 +176,6 @@ public OnPluginStart() {
 	sm_vote_delay = FindConVar("sm_vote_delay");
 
 	g_hBlockCount = CreateConVar("l4d2_blockcount", "3", "0 - Disable blocked vote limit for clients, n - Maximum number of blocked votes per client per map before they are kicked",	FCVAR_PLUGIN, true, 0.0, true, 10.0);
-
-	
 	
 	RegAdminCmd("sm_cvote", Command_CustomVote, ADMFLAG_GENERIC, "Initiate a vote, or list available votes", "customvotes", FCVAR_PLUGIN);
 	RegAdminCmd("sm_cvote_reload", Command_ReloadConfig, ADMFLAG_GENERIC, "Reload vote configuration", "customvotes", FCVAR_PLUGIN);
@@ -765,7 +763,7 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 			if (GetMenuItemCount(parammenu) > 0 && parammenu != INVALID_HANDLE && GetClientTeam(client) != 1) {
 				if (g_adminMenuHandle != INVALID_HANDLE)
 					SetMenuExitBackButton(parammenu, true);
-				DisplayMenu(parammenu, client, 30);
+				DisplayMenu(parammenu, client, 20);
 			} else {
 				ClearCurrentVote();
 			}
@@ -945,7 +943,7 @@ CVote_DoVote(client, const String:votename[], const String:vparams[][], vparamct
 			
 			if (cvote[team] == 1)
 			{
-				if (GetClientTeam(i) != GetClientTeam(client)
+				if (GetClientTeam(i) != GetClientTeam(client))
 					continue;
 				else if (GetClientTeam(i) == GetClientTeam(client))
 					iPlayers[iNumPlayers++] = i;
@@ -1164,7 +1162,7 @@ CVote_ConfirmVote(vtargets[], vtargetct, const String:execcommand[], const Strin
 
 	g_confirmMenus = vtargetct;
 	for (new i = 0; i < vtargetct; ++i)
-		DisplayMenu(cm, vtargets[i], 30);
+		DisplayMenu(cm, vtargets[i], 20);
 }
 
 public CVote_ConfirmMenuHandler(Handle:menu, MenuAction:action, param1, param2) {
@@ -1499,7 +1497,7 @@ stock PrintVotesToMenu(client) {
 	}
 
 	if (GetMenuItemCount(menu) > 0 && GetClientTeam(client) != 1)
-		DisplayMenu(menu, client, 30);
+		DisplayMenu(menu, client, 20);
 }
 
 public CVote_VoteListMenuHandler(Handle:menu, MenuAction:action, param1, param2) {
