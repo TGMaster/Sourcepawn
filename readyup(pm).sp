@@ -168,6 +168,7 @@ public OnMapStart()
 {
 	/* OnMapEnd needs this to work */
 	GetConVarString(l4d_ready_live_sound, liveSound, sizeof(liveSound));
+	PrecacheSound("/buttons/button14.wav");
 	PrecacheSound("/level/gnomeftw.wav");
 	PrecacheSound("/weapons/defibrillator/defibrillator_use.wav");
 	PrecacheSound("/commentary/com-welcome.wav");
@@ -420,6 +421,7 @@ public Action:Ready_Cmd(client, args)
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = true;
+		EmitSoundToClient(client, "/buttons/button14.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		if (CheckFullReady())
 			InitiateLiveCountdown();
 	}
@@ -433,6 +435,7 @@ public Action:Unready_Cmd(client, args)
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = false;
+		EmitSoundToClient(client, "/buttons/button14.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		CancelFullReady();
 	}
 
@@ -445,6 +448,7 @@ public Action:ToggleReady_Cmd(client, args)
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = !isPlayerReady[client];
+		EmitSoundToClient(client, "/buttons/button14.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		if (isPlayerReady[client] && CheckFullReady())
 		{
 			InitiateLiveCountdown();
@@ -861,7 +865,7 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 			{
 				EmitSoundToAll(countdownSound[GetRandomInt(0,MAX_SOUNDS-1)]);
 			}
-			else { EmitSoundToAll(liveSound, _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5); }
+			else { EmitSoundToAll(liveSound, _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0); }
 		}
 		return Plugin_Stop;
 	}
@@ -870,7 +874,7 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 		PrintHintTextToAll("Live in: %d\nSay !unready to cancel", readyDelay);
 		if (GetConVarBool(l4d_ready_enable_sound))
 		{
-			EmitSoundToAll("buttons/blip1.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+			EmitSoundToAll("buttons/blip1.wav", _, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		}
 		readyDelay--;
 	}
@@ -932,7 +936,7 @@ stock DoSecrets(client)
 		ActivateEntity(particle);
 		AcceptEntityInput(particle, "start");
 		CreateTimer(5.0, killParticle, particle, TIMER_FLAG_NO_MAPCHANGE);
-		EmitSoundToAll("/level/gnomeftw.wav", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+		EmitSoundToAll("/level/gnomeftw.wav", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 1.0);
 		CreateTimer(2.5, killSound);
 		CreateTimer(SecretCmdTimer, SecretSpamDelay, client);
 		blockSecretSpam[client] = true;
