@@ -49,6 +49,7 @@ enum L4D2Team
 }
 
 // Plugin Cvars
+new Handle:Duration;
 new Handle:l4d_ready_disable_spawns;
 new Handle:l4d_ready_cfg_name;
 new Handle:l4d_ready_survivor_freeze;
@@ -83,7 +84,7 @@ new bool:blockSecretSpam[MAXPLAYERS + 1];
 new String:liveSound[256];
 
 new Handle:allowedCastersTrie;
-int tg;
+//int tg;
 
 new String:countdownSound[MAX_SOUNDS][]=
 {
@@ -187,6 +188,7 @@ public OnMapStart()
 		blockSecretSpam[client] = false;
 	}
 	readyCountdownTimer = INVALID_HANDLE;
+	Duration = INVALID_HANDLE;
 }
 
 /* This ensures all cvars are reset if the map is changed during ready-up */
@@ -623,17 +625,16 @@ UpdatePanel()
 	decl String:date[64];
 	decl String:time[64];
 	decl String:cfgBuf[512];
-	GetConVarString(l4d_ready_cfg_name, cfgBuf, sizeof(cfgBuf));
-	Format(cfgBuf, sizeof(cfgBuf), "%s (%s round)", cfgBuf, (InSecondHalfOfRound() ? "2nd" : "1st"));
+	GetConVarString(FindConVar("hostname"), cfgBuf, sizeof(cfgBuf));
+	Format(cfgBuf, sizeof(cfgBuf), "%s :: %s round", cfgBuf, (InSecondHalfOfRound() ? "2nd" : "1st"));
 	DrawPanelText(menuPanel, cfgBuf);
 	// Date
 	FormatTime(date, sizeof(date), "%d/%m/%Y");
 	// Time
 	FormatTime(time, sizeof(time), "%H:%M");
 	Format(cfgBuf, sizeof(cfgBuf), "Date: %s | Time: %s", date, time);
-	DrawPanelText(menuPanel, cfgBuf);
-	
-	PrintAnimatedWords(); //Server Name, Instructor
+	//DrawPanelText(menuPanel, cfgBuf);
+	//PrintAnimatedWords(); //Server Name, Instructor
 	for (new i = 0; i < MAX_FOOTERS; i++)
 	{
 		DrawPanelText(menuPanel, readyFooter[i]);
@@ -688,11 +689,13 @@ InitiateReadyUp()
 	}
 
 	UpdatePanel();
-	CreateTimer(1.0, MenuRefresh_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+	if (Duration == INVALID_HANDLE)
+		Duration = CreateTimer(1.0, MenuRefresh_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 
 	inReadyUp = true;
 	inLiveCountdown = false;
 	readyCountdownTimer = INVALID_HANDLE;
+	Duration = INVALID_HANDLE;
 
 	if (GetConVarBool(l4d_ready_disable_spawns))
 	{
@@ -710,6 +713,12 @@ InitiateReadyUp()
 
 InitiateLive(bool:real = true)
 {
+	if (Duration != INVALID_HANDLE)
+	{
+		CloseHandle(Duration);
+		Duration = INVALID_HANDLE;
+	}
+	
 	inReadyUp = false;
 	inLiveCountdown = false;
 
@@ -855,10 +864,11 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 {
 	if (readyDelay == 0)
 	{
-		tg = 0;
+		//tg = 0;
 		PrintHintTextToAll("Round is live!");
 		InitiateLive();
 		readyCountdownTimer = INVALID_HANDLE;
+		Duration = INVALID_HANDLE;
 		if (GetConVarBool(l4d_ready_enable_sound))
 		{
 			if (GetConVarBool(l4d_ready_chuckle))
@@ -1014,31 +1024,27 @@ MakePropsBreakable() {
       DispatchKeyValueFloat(iEntity, "minhealthdmg", 5.0);
     }
 }
-
+/*
 PrintAnimatedWords()
 {
-	decl String:info[512];
-	GetConVarString(FindConVar("hostname"), info, sizeof(info));
-	if (tg < 10) tg += 1;
+	if (tg < 8) tg++;
 	if (tg == 1 || tg == 2)
-		DrawPanelText(menuPanel, info);
-	else if (tg == 3 || tg == 4)
 		DrawPanelText(menuPanel, "☐ !hide, !show, !votemenu");
-	else if (tg == 5 || tg == 6)
+	else if (tg == 3 || tg == 4)
 		DrawPanelText(menuPanel, "☐ Games: !snake, !pong");
-	else if (tg == 7 || tg == 8)
+	else if (tg == 5 || tg == 6)
 		DrawPanelText(menuPanel, "☐ Addons: [✘] | Scripts: [✘]");
-	else if (tg == 9)
+	else if (tg == 7)
 		DrawPanelText(menuPanel, "★ Good luck and have fun ★");
-	else if (tg == 10)
+	else if (tg == 8)
 	{
 		DrawPanelText(menuPanel, "★ Good luck and have fun ★");
 		tg = 0;
 	}
 }
+*/
 
 InSecondHalfOfRound()
 {
 	return GameRules_GetProp("m_bInSecondHalfOfRound");
 }
-		
