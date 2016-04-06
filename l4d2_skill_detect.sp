@@ -2438,11 +2438,17 @@ stock HandlePop( attacker, victim, shoveCount, Float:timeAlive )
     {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-        	CPrintToChatAll( "{green}★ {olive}%N {default}has shutdown {olive}%N {default}in {blue}%0.1f s.", attacker, victim, timeAlive);
+        	if (timeAlive <= 2.0)
+        		CPrintToChatAll( "{green}★ {olive}%N {default}has shutdown {olive}%N {default}in {blue}%0.1f {default}s.", attacker, victim, timeAlive );
+        	else
+        		CPrintToChatAll( "{green}★ {olive}%N{default} popped {olive}%N{default}.", attacker, victim );
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
-        	CPrintToChatAll( "{green}%N\x01 popped a boomer.", attacker );
+        	if (timeAlive <= 2.0)
+        		CPrintToChatAll( "{green}★ {olive}%N{default} has shutdown a boomer in {blue}%0.1f {default}s.", attacker, timeAlive );
+        	else
+        		CPrintToChatAll( "{green}★ {olive}%N{default} popped {olive}%N{default}.", attacker );
         }
     }
     
@@ -2462,11 +2468,11 @@ stock HandleLevel( attacker, victim )
     {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-            PrintToChatAll( "\x04★★★ \x05%N\x01 leveled \x05%N\x01.", attacker, victim );
+        	CPrintToChatAll( "{green}★ {olive}%N{blue} full-{default}leveled {olive}%N{default}.", attacker, victim );
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
-            PrintToChatAll( "\x04★★ \x05%N\x01 leveled a charger.", attacker );
+        	CPrintToChatAll( "{green}★ {olive}%N{default} leveled a charger.", attacker );
         }
         else {
             PrintToChatAll( "A charger was leveled." );
@@ -2487,11 +2493,11 @@ stock HandleLevelHurt( attacker, victim, damage )
     {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-            PrintToChatAll( "\x04%N\x01 chip-leveled \x05%N\x01 (\x03%i\x01 damage).", attacker, victim, damage );
+        	CPrintToChatAll("{green}★ {olive}%N{blue} chip-{default}leveled {olive}%N{default} ({blue}%i{default} damage).", attacker, victim, damage);
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
-            PrintToChatAll( "\x04%N\x01 chip-leveled a charger. (\x03%i\x01 damage)", attacker, damage );
+        	CPrintToChatAll( "{green}★ {olive}%N{blue} chip-{default}leveled a charger. ({blue}%i{default} damage)", attacker, damage );
         }
         else {
             PrintToChatAll( "A charger was chip-leveled (\x03%i\x01 damage).", damage );
@@ -2514,7 +2520,7 @@ stock HandleDeadstop( attacker, victim )
     {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-            PrintToChatAll( "\x04%N\x01 deadstopped \x05%N\x01.", attacker, victim );
+            PrintToChatAll( "\x04★ \x05%N\x01 deadstopped \x05%N\x01.", attacker, victim );
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
@@ -2566,7 +2572,7 @@ stock HandleSkeet( attacker, victim, bool:bMelee = false, bool:bSniper = false, 
         }
         else if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-        	CPrintToChatAll( "{green}★★★ {olive}%N {blue}%s{default}skeeted {olive}%N{default}.",
+        	CPrintToChatAll( "{green}★ {olive}%N {blue}%s{default}skeeted {olive}%N{default}.",
                     attacker,
                     (bMelee) ? "melee-": ((bSniper) ? "headshot-" : ((bGL) ? "grenade-" : "") ),
                     victim 
@@ -2574,7 +2580,7 @@ stock HandleSkeet( attacker, victim, bool:bMelee = false, bool:bSniper = false, 
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
-        	CPrintToChatAll( "{green}★★ {olive}%N {blue}%s{default}skeeted a hunter.",
+        	CPrintToChatAll( "{green}★ {olive}%N {blue}%s{default}skeeted a hunter.",
                     attacker,
                     (bMelee) ? "melee-": ((bSniper) ? "headshot-" : ((bGL) ? "grenade-" : "") )
                 );
@@ -2668,7 +2674,7 @@ HandleCrown( attacker, damage )
     {
         if ( IS_VALID_INGAME(attacker) )
         {
-            PrintToChatAll( "\x04%N\x01 crowned a witch (\x03%i\x01 damage).", attacker, damage );
+            PrintToChatAll( "\x04★ \x05%N\x01 crowned a witch (\x03%i\x01 damage).", attacker, damage );
         }
         else {
             PrintToChatAll( "A witch was crowned." );
@@ -2689,7 +2695,7 @@ HandleDrawCrown( attacker, damage, chipdamage )
     {
         if ( IS_VALID_INGAME(attacker) )
         {
-            PrintToChatAll( "\x04%N\x01 draw-crowned a witch (\x03%i\x01 damage, \x05%i\x01 chip).", attacker, damage, chipdamage );
+        	CPrintToChatAll( "{green}★ {olive}%N{blue} draw-{default}crowned a witch ({blue}%i{default} damage, {olive}%i{default} chip).", attacker, damage, chipdamage );
         }
         else {
             PrintToChatAll( "A witch was draw-crowned (\x03%i\x01 damage, \x05%i\x01 chip).", damage, chipdamage );
@@ -2712,7 +2718,7 @@ HandleTongueCut( attacker, victim )
     {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(victim) )
         {
-            PrintToChatAll( "\x04★★ \x05%N\x01 cut \x05%N\x01's tongue.", attacker, victim );
+            PrintToChatAll( "\x04★ \x05%N\x01 cut \x05%N\x01's tongue.", attacker, victim );
         }
         else if ( IS_VALID_INGAME(attacker) )
         {
@@ -2793,7 +2799,7 @@ stock HandleHunterDP( attacker, victim, actualDamage, Float:calculatedDamage, Fl
     ) {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(attacker) )
         {
-            PrintToChatAll( "\x04★★★ \x05%N\x01 high-pounced \x05%N\x01 (\x03%i\x01 damage, height: \x05%i\x01).", attacker,  victim, RoundFloat(calculatedDamage), RoundFloat(height) );
+        	CPrintToChatAll( "{green}★ {olive}%N{red} high-{default}pounced {olive}%N{default} ({red}%i{default} damage, height: {olive}%i{default}).", attacker,  victim, RoundFloat(calculatedDamage), RoundFloat(height) );
         }
         else if ( IS_VALID_INGAME(victim) )
         {
@@ -2820,7 +2826,7 @@ stock HandleJockeyDP( attacker, victim, Float:height )
     ) {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(attacker) )
         {
-            PrintToChatAll( "\x04★★ \x05%N\x01 jockey high-pounced \x05%N\x01 (height: \x05%i\x01).", attacker,  victim, RoundFloat(height) );
+        	CPrintToChatAll( "{green}★ {olive}%N{default} jockey {red}high-{default}pounced {olive}%N{default} (height: {red}%i{default}).", attacker,  victim, RoundFloat(height) );
         }
         else if ( IS_VALID_INGAME(victim) )
         {
@@ -2846,7 +2852,7 @@ stock HandleDeathCharge( attacker, victim, Float:height, Float:distance, bool:bC
     ) {
         if ( IS_VALID_INGAME(attacker) && IS_VALID_INGAME(victim) && !IsFakeClient(attacker) )
         {
-            PrintToChatAll( "\x04★★★ \x05%N\x01 death-charged \x05%N\x01 %s(height: \x05%i\x01).",
+        	CPrintToChatAll( "{green}★ {olive}%N{red} death-{default}charged {olive}%N{default} %s(height: {red}%i{default}).",
                     attacker,
                     victim,
                     (bCarried) ? "" : "by bowling ",
@@ -2954,7 +2960,7 @@ stock HandleBHopStreak( survivor, streak, Float: maxVelocity )
             IS_VALID_INGAME(survivor) && !IsFakeClient(survivor) &&
             streak >= GetConVarInt(g_hCvarBHopMinStreak)
     ) {
-        PrintToChatAll( "\x04%N\x01 got \x05%i\x01 bunnyhop%s in a row (top speed: \x05%.1f\x01).",
+    	CPrintToChatAll( "{green}★ {olive}%N{default} got {blue}%i{default} bunnyhop%s in a row (top speed: {olive}%.1f{default}).",
                 survivor,
                 streak,
                 ( streak > 1 ) ? "s" : "",
@@ -3117,4 +3123,4 @@ stock bool: IsWitch(entity)
     if ( !GetTrieValue(g_hTrieEntityCreated, classname, classnameOEC) || classnameOEC != OEC_WITCH ) { return false; }
     
     return true;
-}
+   }
