@@ -121,7 +121,8 @@ public OnLibraryRemoved(const String:name[])
 		scoremode &= ~L4D2_ScoreMod;
 	} else if (strcmp(name, "scoremod2") == 0) {
 		scoremode &= ~ScoreMod2;
-	} else if (strcmp(name, "l4d_tank_control") == 0) {
+	}
+	if (strcmp(name, "l4d_tank_control") == 0) {
 		isTankControlLoaded = false;
 	}
 }
@@ -131,7 +132,8 @@ public OnLibraryAdded(const String:name[])
 		scoremode |= L4D2_ScoreMod;
 	} else if (strcmp(name, "scoremod2") == 0) {
 		scoremode |= ScoreMod2;
-	} else if (strcmp(name, "l4d_tank_control") == 0) {
+	}
+	if (strcmp(name, "l4d_tank_control") == 0) {
 		isTankControlLoaded = true;
 	}
 }
