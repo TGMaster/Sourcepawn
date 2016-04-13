@@ -67,7 +67,7 @@ new Handle:god;
 new Handle:sb_stop;
 new Handle:survivor_limit;
 new Handle:z_max_player_zombies;
-new Handle:infinite_ammo;
+//new Handle:infinite_ammo;
 
 new Handle:casterTrie;
 new Handle:liveForward;
@@ -128,7 +128,7 @@ public OnPluginStart()
 	allowedCastersTrie = CreateArray(64);
 
 	director_no_specials = FindConVar("director_no_specials");
-	infinite_ammo = FindConVar("sv_infinite_primary_ammo");
+	//infinite_ammo = FindConVar("sv_infinite_primary_ammo");
 	god = FindConVar("god");
 	sb_stop = FindConVar("sb_stop");
 	survivor_limit = FindConVar("survivor_limit");
@@ -635,6 +635,9 @@ UpdatePanel()
 	Format(cfgBuf, sizeof(cfgBuf), "Date: %s | Time: %s", date, time);
 	//DrawPanelText(menuPanel, cfgBuf);
 	//PrintAnimatedWords(); //Server Name, Instructor
+	DrawPanelText(menuPanel, "====================================");
+	DrawPanelText(menuPanel, "➜ Cmds: !mix, !h, !t, !c, !votemenu");
+	DrawPanelText(menuPanel, "➜ !smute [player] | !sunmute [player]");
 	for (new i = 0; i < MAX_FOOTERS; i++)
 	{
 		DrawPanelText(menuPanel, readyFooter[i]);
@@ -977,13 +980,13 @@ public Action:killSound(Handle:timer)
 DisableEntities() {
   ActivateEntities("prop_door_rotating", "SetUnbreakable");
   MakePropsUnbreakable();
-  SetConVarInt(infinite_ammo, 1);
+  //SetConVarInt(infinite_ammo, 1);
 }
 
 EnableEntities() {
   ActivateEntities("prop_door_rotating", "SetBreakable");
   MakePropsBreakable();
-  SetConVarInt(infinite_ammo, 0);
+  //SetConVarInt(infinite_ammo, 0);
 }
 
 
