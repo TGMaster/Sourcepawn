@@ -5,9 +5,10 @@
 #undef REQUIRE_EXTENSIONS
 #include <geoipcity>
 #undef REQUIRE_PLUGIN
+#include <colors>
 
 #define DEBUG 0
-#define	PLUGIN_VERSION		"1.0.2"
+#define	PLUGIN_VERSION		"1.0.3"
 
 //Handle
 new Handle:g_hGameMode = INVALID_HANDLE;
@@ -90,9 +91,9 @@ public OnClientConnected(client)
 	{
 		hCount ++;
 		if (hCount <= hSlots)
-			PrintToChatAll("\x03%N \x01is connecting (\x04%i\x01/\x04%d\x01)", client, hCount, hSlots);
+			CPrintToChatAll("{olive}%N {default}is {blue}connecting{default} ({green}%i{default}/{green}%d{default})", client, hCount, hSlots);
 		else
-			PrintToChatAll("\x03%N \x01is connecting to the server.", client);
+			CPrintToChatAll("{olive}%N {default}is {blue}connecting{default} to the server.", client);
 	}
 }
 
@@ -113,10 +114,10 @@ public Action:playerDisconnect(Handle:event, const String:name[], bool:dontBroad
 		
 		if (strcmp(reason, timedOut) == 0 || strcmp(reason, "No Steam logon") == 0)
 		{
-			Format(reason, sizeof(reason), "Crashed game.");
+			Format(reason, sizeof(reason), "Game crashed.");
 		}
 		
-		PrintToChatAll("\x03%N \x01left - \x04%s", client, reason);
+		CPrintToChatAll("{olive}%N {default}has {red}left {default}<{olive}%s{default}>", client, reason);
 	}
 	return event_PlayerDisconnect_Suppress( event, name, dontBroadcast );
 }
