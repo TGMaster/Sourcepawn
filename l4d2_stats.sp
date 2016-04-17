@@ -343,7 +343,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 				decl String:buf[MAX_NAME_LENGTH + 8];
 				new assist_shots = g_iShotsDealt[victim][assisters[0][0]];
 				// Construct assisters string
-				Format(assister_string, sizeof(assister_string), "%N {default}({green}%d{default}/{green}%d {default}shot%s)",
+				Format(assister_string, sizeof(assister_string), "%N (%d/%d shot%s)",
 				assisters[0][0],
 				assisters[0][1],
 				g_iShotsDealt[victim][assisters[0][0]],
@@ -351,7 +351,7 @@ public Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 				for (i = 1; i < assister_count; i++)
 				{
 					assist_shots = g_iShotsDealt[victim][assisters[i][0]];
-					Format(buf, sizeof(buf), ", %N {default}({green}%d{default}/{green}%d {default}shot%s)",
+					Format(buf, sizeof(buf), ", %N (%d/%d shot%s)",
 					assisters[i][0],
 					assisters[i][1],
 					assist_shots,
