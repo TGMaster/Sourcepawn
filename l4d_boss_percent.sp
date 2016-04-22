@@ -67,6 +67,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_tank", BossCmd);
 	RegConsoleCmd("sm_witch", BossCmd);
 	RegConsoleCmd("sm_t", BossCmd);
+	RegConsoleCmd("sm_w", BossCmd);
 
 	HookEvent("player_left_start_area", LeftStartAreaEvent, EventHookMode_PostNoCopy);
 	HookEvent("round_start", RoundStartEvent, EventHookMode_PostNoCopy);
@@ -180,7 +181,7 @@ stock PrintBossPercents(client)
 		if (iWitchPercent)
 			CPrintToChat(client, "{default}[{red}!{default}] Witch: [{olive}%d%%{default}]", iWitchPercent);
 		else
-			PrintToChat(client, "Witch: None");
+			PrintToChat(client, "\x01Witch: \x05None");
 	}
 }
 
