@@ -1,3 +1,23 @@
+/*
+	SourcePawn is Copyright (C) 2006-2008 AlliedModders LLC.  All rights reserved.
+	SourceMod is Copyright (C) 2006-2008 AlliedModders LLC.  All rights reserved.
+	Pawn and SMALL are Copyright (C) 1997-2008 ITB CompuPhase.
+	Source is Copyright (C) Valve Corporation.
+	All trademarks are property of their respective owners.
+
+	This program is free software: you can redistribute it and/or modify it
+	under the terms of the GNU General Public License as published by the
+	Free Software Foundation, either version 3 of the License, or (at your
+	option) any later version.
+
+	This program is distributed in the hope that it will be useful, but
+	WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	General Public License for more details.
+
+	You should have received a copy of the GNU General Public License along
+	with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #pragma semicolon 1
 
 #include <sourcemod>
@@ -5,15 +25,16 @@
 #define L4D2UTIL_STOCKS_ONLY
 #include <l4d2util>
 #undef REQUIRE_PLUGIN
-
+#include <readyup>
 #include <colors>
 
 public Plugin:myinfo =
 {
 	name = "L4D2 Boss Flow Announce (Back to roots edition)",
-	author = "ProdigySim, Jahze, Stabby, CircleSquared, CanadaRox",
-	version = "1.6-btr",
-	description = "Announce boss flow percents!"
+	author = "ProdigySim, Jahze, Stabby, CircleSquared, CanadaRox, Visor",
+	version = "1.6.1",
+	description = "Announce boss flow percents!",
+	url = "https://github.com/Attano/Equilibrium"
 };
 
 new iWitchPercent = 0;
@@ -23,10 +44,14 @@ new Handle:g_hVsBossBuffer;
 new Handle:hCvarPrintToEveryone;
 new Handle:hCvarTankPercent;
 new Handle:hCvarWitchPercent;
+new bool:readyUpIsAvailable;
+new bool:readyFooterAdded;
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 {
+	CreateNative("UpdateBossPercents", Native_UpdateBossPercents);
 	MarkNativeAsOptional("AddStringToReadyFooter");
+	RegPluginLibrary("l4d_boss_percent");
 	return APLRes_Success;
 }
 
@@ -41,8 +66,33 @@ public OnPluginStart()
 	RegConsoleCmd("sm_boss", BossCmd);
 	RegConsoleCmd("sm_tank", BossCmd);
 	RegConsoleCmd("sm_witch", BossCmd);
+	RegConsoleCmd("sm_t", BossCmd);
 
+	HookEvent("player_left_start_area", LeftStartAreaEvent, EventHookMode_PostNoCopy);
 	HookEvent("round_start", RoundStartEvent, EventHookMode_PostNoCopy);
+}
+
+public OnAllPluginsLoaded()
+{
+	readyUpIsAvailable = LibraryExists("readyup");
+}
+
+public OnLibraryRemoved(const String:name[])
+{
+	if (StrEqual(name, "readyup")) readyUpIsAvailable = false;
+}
+
+public OnLibraryAdded(const String:name[])
+{
+	if (StrEqual(name, "readyup")) readyUpIsAvailable = true;
+}
+
+public LeftStartAreaEvent(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	if (!readyUpIsAvailable)
+		for (new client = 1; client <= MaxClients; client++)
+			if (IsClientConnected(client) && IsClientInGame(client))
+				PrintBossPercents(client);
 }
 
 public OnRoundIsLive()
@@ -54,7 +104,17 @@ public OnRoundIsLive()
 
 public RoundStartEvent(Handle:event, const String:name[], bool:dontBroadcast)
 {
+	readyFooterAdded = false;
+
 	CreateTimer(5.0, SaveBossFlows);
+	CreateTimer(6.0, AddReadyFooter); // workaround for boss equalizer
+}
+
+public Native_UpdateBossPercents(Handle:plugin, numParams)
+{
+	CreateTimer(0.1, SaveBossFlows);
+	CreateTimer(0.2, AddReadyFooter);
+	return true;
 }
 
 public Action:SaveBossFlows(Handle:timer)
@@ -84,7 +144,25 @@ public Action:SaveBossFlows(Handle:timer)
 			iTankPercent = RoundToNearest(GetTankFlow(1)*100.0);
 		}
 	}
-	
+}
+
+public Action:AddReadyFooter(Handle:timer)
+{
+	if (readyFooterAdded) return;
+	if (readyUpIsAvailable)
+	{
+		decl String:readyString[65];
+		if (iWitchPercent && iTankPercent)
+			Format(readyString, sizeof(readyString), "Tank: %d%%, Witch: %d%%", iTankPercent, iWitchPercent);
+		else if (iTankPercent)
+			Format(readyString, sizeof(readyString), "Tank: %d%%, Witch: None", iTankPercent);
+		else if (iWitchPercent)
+			Format(readyString, sizeof(readyString), "Tank: None, Witch: %d%%", iWitchPercent);
+		else
+			Format(readyString, sizeof(readyString), "Tank: None, Witch: None");
+		AddStringToReadyFooter(readyString);
+		readyFooterAdded = true;
+	}
 }
 
 stock PrintBossPercents(client)
@@ -92,17 +170,17 @@ stock PrintBossPercents(client)
 	if(GetConVarBool(hCvarTankPercent))
 	{
 		if (iTankPercent)
-			CPrintToChat(client, "{red}Tank: {olive}%d%%", iTankPercent);
+			CPrintToChat(client, "{default}[{red}!{default}] Tank: [{olive}%d%%{default}]", iTankPercent);
 		else
-			CPrintToChat(client, "{red}Tank: {olive}None");
+			PrintToChat(client, "\x01Tank: \x05None");
 	}
 
 	if(GetConVarBool(hCvarWitchPercent))
 	{
 		if (iWitchPercent)
-			CPrintToChat(client, "{red}Witch: {olive}%d%%", iWitchPercent);
+			CPrintToChat(client, "{default}[{red}!{default}] Witch: [{olive}%d%%{default}]", iWitchPercent);
 		else
-			CPrintToChat(client, "{red}Witch: {olive}None");
+			PrintToChat(client, "Witch: None");
 	}
 }
 
