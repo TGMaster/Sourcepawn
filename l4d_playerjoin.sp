@@ -20,7 +20,7 @@ new bool:g_UseGeoIPCity = false;
 public Plugin:myinfo = 
 {
 	name			=	"Player Join Counting",
-	author			=	"Blazers Team",
+	author			=	"TGMaster, Arg!",
 	description		=	"Informs other players when a client connects to the server and changes teams.",
 	version			=	PLUGIN_VERSION,
 	url				=	""
