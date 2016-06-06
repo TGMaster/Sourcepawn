@@ -36,7 +36,7 @@ public Plugin:myinfo =
 	name = "L4D2 Ready-Up",
 	author = "CanadaRox",
 	description = "New and improved ready-up plugin.",
-	version = "8.5",
+	version = "8.6",
 	url = "https://github.com/jacob404/Pro-Mod-4.0/releases/latest"
 };
 
@@ -259,13 +259,13 @@ public Action:Cast_Cmd(client, args)
 	{
 		SetTrieValue(casterTrie, buffer, 1);
 		ReplyToCommand(client, "You have registered yourself as a caster!");
-		ChangeClientTeam(client, 1);
+		ChangeClientTeam(client, L4D2Team_Spectator);
 	}
 	else
 	{
 		SetTrieValue(casterTrie, buffer, 1);
 		PrintToChat(client, "\x01<\x05Cast\x01> You have registered yourself as a caster! Please \x04Reconnect\x01 to make your Addons work.");
-		ChangeClientTeam(client, 1);
+		ChangeClientTeam(client, L4D2Team_Spectator);
 	}
 	return Plugin_Handled;
 }
