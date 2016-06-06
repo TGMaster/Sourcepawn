@@ -258,11 +258,14 @@ public Action:Cast_Cmd(client, args)
 	if (index != -1)
 	{
 		SetTrieValue(casterTrie, buffer, 1);
-		ReplyToCommand(client, "You have registered yourself as a caster");
+		ReplyToCommand(client, "You have registered yourself as a caster!");
+		ChangeClientTeam(client, 1);
 	}
 	else
 	{
-		ReplyToCommand(client, "Your SteamID was not found in this server's caster whitelist. Contact the admins to get approved.");
+		SetTrieValue(casterTrie, buffer, 1);
+		PrintToChat(client, "\x01<\x05Cast\x01> You have registered yourself as a caster! Please \x04Reconnect\x01 to make your Addons work.");
+		ChangeClientTeam(client, 1);
 	}
 	return Plugin_Handled;
 }
@@ -345,6 +348,7 @@ public Action:NotCasting_Cmd(client, args)
 	{
 		GetClientAuthId(client, AuthId_Steam2, buffer, sizeof(buffer));
 		RemoveFromTrie(casterTrie, buffer);
+		KickClient(client, "Please reconnect to our servers!");
 		return Plugin_Handled;
 	}
 	else // If a target is specified
@@ -419,7 +423,11 @@ public Action:Secret_Cmd(client, args)
 
 public Action:Ready_Cmd(client, args)
 {
-	if (GetClientTeam(client) == 1) return Plugin_Handled;
+	if (GetClientTeam(client) == 1)
+	{
+		if (!IsClientCaster(client)) return Plugin_Handled;
+	}
+	
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = true;
@@ -433,7 +441,11 @@ public Action:Ready_Cmd(client, args)
 
 public Action:Unready_Cmd(client, args)
 {
-	if (GetClientTeam(client) == 1) return Plugin_Handled;
+	if (GetClientTeam(client) == 1)
+	{
+		if (!IsClientCaster(client)) return Plugin_Handled;
+	}
+	
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = false;
@@ -446,7 +458,11 @@ public Action:Unready_Cmd(client, args)
 
 public Action:ToggleReady_Cmd(client, args)
 {
-	if (GetClientTeam(client) == 1) return Plugin_Handled;
+	if (GetClientTeam(client) == 1)
+	{
+		if (!IsClientCaster(client)) return Plugin_Handled;
+	}
+	
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = !isPlayerReady[client];
