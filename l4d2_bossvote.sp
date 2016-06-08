@@ -25,6 +25,7 @@
 #define REQUIRE_PLUGIN
 #include <bosspercent>
 #include <readyup>
+#include <colors>
 
 new Handle:hVote;
 
@@ -53,8 +54,8 @@ public Action:Vote(client, args)
 {
 	if (args < 1)
 	{
-		PrintToChat(client, "\x01[\x03BossVote\x01] Usage: \x04!voteboss\x05 <tank> <witch>");
-		PrintToChat(client, "\x01[\x03BossVote\x01] Example: \x04!voteboss\x05 70 50");
+		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Usage: {green}!voteboss{olive} <tank> <witch>");
+		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Example: {green}!voteboss{default} 70 50");
 		return Plugin_Handled;
 	}
 	GetCmdArg(1, tank, sizeof(tank));
@@ -64,7 +65,7 @@ public Action:Vote(client, args)
 	
 	if (IsSpectator(client) || !IsInReady() || InSecondHalfOfRound())
 	{
-		PrintToChat(client, "\x01[\x03BossVote\x01] Vote can only be started by a player during ready-up @ first round, first map!");
+		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Vote can only be started by a player during ready-up @ first round!");
 		return Plugin_Handled;
 	}
 
@@ -96,7 +97,7 @@ bool:StartVote(client, const String:sVoteHeader[])
 		return true;
 	}
 
-	PrintToChat(client, "\x01[\x03BossVote\x01] Vote cannot be started now.");
+	CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Vote cannot be started now.");
 	return false;
 }
 
