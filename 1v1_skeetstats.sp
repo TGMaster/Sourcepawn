@@ -263,7 +263,7 @@ public OnPluginStart()
     bPlayerLeftStartArea = false;
     
     // Commands
-    RegConsoleCmd("sm_skeets", SkeetStat_Cmd, "Prints the current skeetstats.");
+    RegConsoleCmd("sm_mvp", SkeetStat_Cmd, "Prints the current skeetstats.");
     
     RegConsoleCmd("say", Say_Cmd);
     RegConsoleCmd("say_team", Say_Cmd);
@@ -377,7 +377,7 @@ public Action:Say_Cmd(client, args)
         decl String:sMessage[MAX_NAME_LENGTH];
         GetCmdArg(1, sMessage, sizeof(sMessage));
         
-        if (StrEqual(sMessage, "!skeets")) { return Plugin_Handled; }
+        if (StrEqual(sMessage, "!mvp")) { return Plugin_Handled; }
         
         return Plugin_Continue;
 }
@@ -807,15 +807,15 @@ String: PrintSkeetStats(toClient)
     {
         if (!(iBrevityFlags & BREV_DMG)) {
             if (!(iBrevityFlags & BREV_CI)) {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Kill-Stat{blue}]{default} ({olive}%4d {default}damage,{blue} %3d {default}kills)  ({olive}%3d {default}common)\n", iDidDamageAll[iClientPlaying], iGotKills[iClientPlaying], iGotCommon[iClientPlaying]);
+                Format(tmpBuffer, sizeof(tmpBuffer), "{olive}[{default}Stat{olive}]{default} Kills: ({blue}%4d {default}damage,{blue} %3d {default}kills )  ({blue}%3d {default}common )\n", iDidDamageAll[iClientPlaying], iGotKills[iClientPlaying], iGotCommon[iClientPlaying]);
             } else {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Kill-Stat{blue}]{default} ({olive}%4d {default}damage,{blue} %3d {default}kills)\n", iDidDamageAll[iClientPlaying], iGotKills[iClientPlaying]);
+                Format(tmpBuffer, sizeof(tmpBuffer), "{olive}[{default}Stat{olive}]{default} Kills: ({blue}%4d {default}damage,{blue} %3d {default}kills )\n", iDidDamageAll[iClientPlaying], iGotKills[iClientPlaying]);
             }
         } else {
             if (!(iBrevityFlags & BREV_CI)) {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Kill-Stat{blue}]{default} ({blue}%4d {default}kills, {olive} %3d {default}common)\n", iGotKills[iClientPlaying], iGotCommon[iClientPlaying]);
+                Format(tmpBuffer, sizeof(tmpBuffer), "{olive}[{default}Stat{olive}]{default} Kills: ({blue}%4d {default}kills, {blue} %3d {default}common )\n", iGotKills[iClientPlaying], iGotCommon[iClientPlaying]);
             } else {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Kill-Stat{blue}]{default} ({blue}%4d {default}kills)\n", iGotKills[iClientPlaying]);
+                Format(tmpBuffer, sizeof(tmpBuffer), "{olive}[{default}Stat{olive}]{default} Kills: ({blue}%4d {default}kills )\n", iGotKills[iClientPlaying]);
             }
         }
         StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
@@ -831,7 +831,7 @@ String: PrintSkeetStats(toClient)
     
     if (!(iBrevityFlags & BREV_SKEET))
     {
-        Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Skeet-Stat{blue}]{default} ({blue}%4d {default}normal,{blue} %3d {default}hurt) ({olive}%3d {default}deadstops)\n", iHuntSkeets[iClientPlaying], iHuntSkeetsInj[iClientPlaying], iDeadStops[iClientPlaying]);
+        Format(tmpBuffer, sizeof(tmpBuffer), "{olive}[{default}Stat{olive}]{default} Skeet: ({blue}%4d {default}normal,{blue} %3d {default}hurt ) ({blue}%3d {default}deadstops )\n", iHuntSkeets[iClientPlaying], iHuntSkeetsInj[iClientPlaying], iDeadStops[iClientPlaying]);
         StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
         
         if (!toClient) {
@@ -847,30 +847,30 @@ String: PrintSkeetStats(toClient)
     {
         if (iShotsFired[iClientPlaying] || (iMeleesFired[iClientPlaying] && !(iBrevityFlags & BREV_MELEE))) {
             if (iShotsFired[iClientPlaying]) {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Acc.-Stat{blue}]{default} (all shots [{olive}%3.0f%%{default}]", float(iShotsHit[iClientPlaying]) / float(iShotsFired[iClientPlaying]) * 100);
+                Format(tmpBuffer, sizeof(tmpBuffer), "\x05[\x01Stat\x05]\x01 Acc.: (all shots [\x05%3.0f%%\x01])", float(iShotsHit[iClientPlaying]) / float(iShotsFired[iClientPlaying]) * 100);
             } else {
-                Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Acc.-Stat{blue}]{default} (all shots [{olive}%3.0f%%\x01]", 0.0);
+                Format(tmpBuffer, sizeof(tmpBuffer), "\x05[\x01Stat\x05]\x01 Acc.: (all shots [\x05%3.0f%%\x01])", 0.0);
             }
             if (iPelletsFired[iClientPlaying]) {
                 StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
-                Format(tmpBuffer, sizeof(tmpBuffer), ", buckshot [{olive}%3.0f%%{default}]", float(iPelletsHit[iClientPlaying]) / float(iPelletsFired[iClientPlaying]) * 100);
+                Format(tmpBuffer, sizeof(tmpBuffer), ", buckshot [\x05%3.0f%%\x01]", float(iPelletsHit[iClientPlaying]) / float(iPelletsFired[iClientPlaying]) * 100);
             }
             if (iMeleesFired[iClientPlaying] && !(iBrevityFlags & BREV_MELEE)) {
                 StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
-                Format(tmpBuffer, sizeof(tmpBuffer), ", melee [{olive}%3.0f%%{default}]", float(iMeleesHit[iClientPlaying]) / float(iMeleesFired[iClientPlaying]) * 100);
+                Format(tmpBuffer, sizeof(tmpBuffer), ", melee [\x05%3.0f%%\x01]", float(iMeleesHit[iClientPlaying]) / float(iMeleesFired[iClientPlaying]) * 100);
             }
             StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
             Format(tmpBuffer, sizeof(tmpBuffer), ")\n");
         } else {
-            Format(tmpBuffer, sizeof(tmpBuffer), "{blue}[{default}Acc.-Stat{blue}]{default} (no shots fired)\n");
+            Format(tmpBuffer, sizeof(tmpBuffer), "\x05[\x01Stat\x05]\x01 Acc.: (no shots fired)\n");
         }
         StrCat(printBuffer, sizeof(printBuffer), tmpBuffer);
         
         if (!toClient) {
             PrintToServer("\x01%s", printBuffer);
-            CPrintToChatAll("%s", printBuffer);
+            PrintToChatAll("\x01%s", printBuffer);
         } else if (IsClientAndInGame(toClient)) {
-            CPrintToChat(toClient, "%s", printBuffer);
+            PrintToChat(toClient, "\x01%s", printBuffer);
         }
         printBuffer = "";
     }
