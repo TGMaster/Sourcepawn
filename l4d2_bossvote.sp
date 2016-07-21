@@ -56,6 +56,7 @@ public Action:Vote(client, args)
 	{
 		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Usage: {green}!voteboss{olive} <tank> <witch>");
 		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Example: {green}!voteboss{default} 70 50");
+		CPrintToChat(client, "{blue}[{default}BossVote{blue}]{default} Your setting will be {olive}Tank 70%% {default}and {olive}Witch 50%");
 		return Plugin_Handled;
 	}
 	GetCmdArg(1, tank, sizeof(tank));
@@ -69,8 +70,13 @@ public Action:Vote(client, args)
 		return Plugin_Handled;
 	}
 
-	if (StartVote(client, "Change the percentage of tank and witch spawn?"))
+	new String:printmsg[128];
+	Format(printmsg, sizeof(printmsg), "Change Tank: %s%%, Witch: %s%% ?", tank, witch);
+	if (StartVote(client, printmsg)) {
 		FakeClientCommand(client, "Vote Yes");
+		if (IsInReady())
+			PrintToChatAll("\x05%N\x01 called a vote to change Tank: \x04%s%%\x01, Witch: \x04%s%%", client, tank, witch);
+		}
 
 	return Plugin_Handled; 
 }
@@ -126,8 +132,8 @@ public VoteResultHandler(Handle:vote, num_votes, num_clients, const client_info[
 			if (item_info[i][BUILTINVOTEINFO_ITEM_VOTES] > (num_clients / 2))
 			{
 				DisplayBuiltinVotePass(vote, "Applying custom boss spawns...");
-				PrintToChatAll("\x01[\x03BossVote\x01] Vote passed! Applying custom boss spawns...");
 				CreateTimer(3.0, RewriteBossFlows);
+				CreateTimer(5.0, PrintMessage);
 				return;
 			}
 		}
@@ -148,6 +154,12 @@ public Action:RewriteBossFlows(Handle:timer)
 		SetWitchSpawn(fWitchFlow);
 		UpdateBossPercents();
 	}
+}
+
+public Action:PrintMessage(Handle:timer)
+{
+	for (new i = 1; i <= MaxClients; i++)
+		FakeClientCommand(i, "sm_boss");
 }
 
 SetTankSpawn(Float:flow)
