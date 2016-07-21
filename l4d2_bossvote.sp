@@ -159,7 +159,11 @@ public Action:RewriteBossFlows(Handle:timer)
 public Action:PrintMessage(Handle:timer)
 {
 	for (new i = 1; i <= MaxClients; i++)
-		FakeClientCommand(i, "sm_boss");
+	{
+		if(IsClientInGame(i))
+			if(!IsFakeClient(i))
+				FakeClientCommand(i, "sm_boss");
+	}
 }
 
 SetTankSpawn(Float:flow)
