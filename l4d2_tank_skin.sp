@@ -8,6 +8,8 @@
 #define g_sTankNorm	"models/infected/hulk.mdl"
 #define g_sTankSac	"models/infected/hulk_dlc3.mdl"
 
+new bool:g_bIsTankAlive;
+
 public Plugin:myinfo = 
 {
 	name = "RandomTank",
@@ -20,6 +22,8 @@ public Plugin:myinfo =
 public OnPluginStart()
 {	
 	HookEvent("tank_spawn", eTankSpawn);
+	HookEvent("round_start", EventHook:OnRoundStart, EventHookMode_PostNoCopy);
+	HookEvent("tank_killed", EventHook:OnTankDead, EventHookMode_PostNoCopy);
 }
 
 public OnMapStart()
@@ -29,6 +33,10 @@ public OnMapStart()
 	PrecacheSound("ui/pickup_secret01.wav");
 }
 
+public OnRoundStart()
+{
+	g_bIsTankAlive = false;
+}
 
 public eTankSpawn(Handle:hEvent, const String:sname[], bool:bDontBroadcast)
 {
@@ -47,6 +55,16 @@ public eTankSpawn(Handle:hEvent, const String:sname[], bool:bDontBroadcast)
 			}
 		}
 	}
-	CPrintToChatAll("{red}[{default}!{red}] {olive}Buckle up!");
-	EmitSoundToAll("ui/pickup_secret01.wav");
+	if (!g_bIsTankAlive)
+	{
+		g_bIsTankAlive = true;
+		CPrintToChatAll("{red}[{default}!{red}] {olive}Buckle up!");
+		EmitSoundToAll("ui/pickup_secret01.wav");
+	}
+}
+
+public OnTankDead()
+{
+	if (g_bIsTankAlive)
+		g_bIsTankAlive = false;
 }
