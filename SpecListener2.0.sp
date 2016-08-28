@@ -159,7 +159,7 @@ public Event_PlayerChangeTeam(Handle:event, const String:name[], bool:dontBroadc
 	
 	if(userTeam==TEAM_SPEC && IsValidClient(client))
 	{
-		SetClientListeningFlags(client, VOICE_LISTENALL);
+		SetClientListeningFlags(client, VOICE_NORMAL);
 	}
 	else
 	{
