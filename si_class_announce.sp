@@ -74,7 +74,9 @@ public OnLibraryAdded(const String:name[])
 public OnRoundIsLive()
 {
     // announce SI classes up now
-    AnnounceSIClasses();
+    for (new i = 1; i <= MaxClients; i++)
+    	if (IS_SURVIVOR_ALIVE(i))
+    		AnnounceSIClasses(i);
     g_bIsRoundLive = true;
 }
 
@@ -85,22 +87,24 @@ public Action:Event_RoundEnd(Handle:event, String:name[], bool:dontBroadcast) {
 public Action:PrintSpawns(client, args) {
 	if (!IsClientInGame(client) || !(1 <= client <= MaxClients)) {return;}
 	if (g_bIsRoundLive) {
-		PrintToChat(client, "What are you trying to do?");
+		PrintToChat(client, "\x01Special infected: \x05Your mom\x01, \x05Your dad\x01.");
 		return;
 	}
-	AnnounceSIClasses();
+	AnnounceSIClasses(client);
 }
 
 public Action: L4D_OnFirstSurvivorLeftSafeArea( client )
 {   
     // if no readyup, use this as the starting event
     if (!g_bReadyUpAvailable) {
-        AnnounceSIClasses();
+    	for (new i = 1; i <= MaxClients; i++)
+    		if(IS_SURVIVOR_ALIVE(i))
+        		AnnounceSIClasses(i);
         g_bIsRoundLive = true;
     }
 }
 
-stock AnnounceSIClasses()
+stock AnnounceSIClasses(any:client)
 {
     // get currently active SI classes
     new iSpawns;
@@ -113,12 +117,10 @@ stock AnnounceSIClasses()
         iSpawns++;
     }
 	
-	for (new client = 1; client <= MaxClients; client++) {
-		if (IS_SURVIVOR_ALIVE(client)) {
 		    // print classes, according to amount of spawns found
 		    switch (iSpawns) {
 		        case 4: {
-		            PrintToChat(client,
+		            CPrintToChat(client,
 		                    "Special Infected: {olive}%s{default}, {olive}%s{default}, {olive}%s{default}, {olive}%s{default}.",
 		                    g_csSIClassName[iSpawnClass[0]],
 		                    g_csSIClassName[iSpawnClass[1]],
@@ -151,6 +153,4 @@ stock AnnounceSIClasses()
 		      		CPrintToChat(client, "There are no special infected.");
 		      	}
 		    }
-   		}
-  	}
 }
