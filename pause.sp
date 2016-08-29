@@ -412,13 +412,13 @@ UpdatePanel()
 	PrintAnimatedWords(); // Animated Words
 	
 	if (numb < 60)
-		Format(pause, sizeof(pause), "Pause duration: %is", numb);
+		Format(pause, sizeof(pause), "Eslapsed time: %is", numb);
 	else
 	{
 		new min = numb/60;
 		new sec = numb-min*60;
 		
-		Format(pause, sizeof(pause), "Pause duration: %im %is", min, sec);
+		Format(pause, sizeof(pause), "Eslapsed time: %im %is", min, sec);
 	}
 	DrawPanelText(menuPanel, pause);
 	
