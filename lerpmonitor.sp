@@ -20,6 +20,7 @@
 */
 #pragma semicolon 1
 #include <sourcemod>
+#include <colors>
 
 #define CVAR_FLAGS 			FCVAR_PLUGIN
 #define PLUGIN_VERSION 		"1.0"
@@ -38,6 +39,7 @@ static Handle:cVarAllowedLerpChanges;
 static Handle:cVarLerpChangeSpec;
 static Handle:cVarMinLerp;
 static Handle:cVarMaxLerp;
+static Handle:cVarAnnounce;
 
 static Handle:cVarMinUpdateRate;
 static Handle:cVarMaxUpdateRate;
@@ -73,6 +75,7 @@ public OnPluginStart() {
 	cVarReadyUpLerpChanges = CreateConVar("sm_readyup_lerp_changes", "1", "Allow lerp changes during ready-up", CVAR_FLAGS);
 	cVarMinLerp = CreateConVar("sm_min_lerp", "0.000", "Minimum allowed lerp value", CVAR_FLAGS);
 	cVarMaxLerp = CreateConVar("sm_max_lerp", "0.1", "Maximum allowed lerp value", CVAR_FLAGS);
+	cVarAnnounce = CreateConVar("sm_lerp_announce", "1", "Announce everytime player change lerp", CVAR_FLAGS);
 	
 	RegConsoleCmd("sm_lerps", Lerps_Cmd, "List the Lerps of all players in game", CVAR_FLAGS);
 	
@@ -202,6 +205,7 @@ public Event_RoundStart(Handle:event, const String:name[], bool:dontBroadcast) {
 }
 
 ProcessPlayerLerp(client) {	
+	new bool:IsAnnounce = GetConVarBool(cVarAnnounce);
 	// get lerp
 	new Float:newLerpTime = GetLerpTime(client);
 	// set lerp for fixing differences between server and client with cl_inter_ratio 0
@@ -212,10 +216,10 @@ ProcessPlayerLerp(client) {
 	if ((FloatCompare(newLerpTime, GetConVarFloat(cVarMinLerp)) == -1) || (FloatCompare(newLerpTime, GetConVarFloat(cVarMaxLerp)) == 1)) {
 		
 		//PrintToChatAll("%N's lerp changed to %.01f", client, newLerpTime*1000);
-		PrintToChatAll("\x03%N \x01was moved to spectators for lerp \x04%.01f\x01!", client, newLerpTime*1000);
+		CPrintToChatAllEx(client,"{teamcolor}%N {default}was moved to spectators for lerp {olive}%.01f{default}!", client, newLerpTime*1000);
 		ChangeClientTeam(client, L4D_TEAM_SPECTATE);
-		PrintToChat(client, "Illegal lerp value (min: \x04%.01f\x01, max: \x04%.01f)",
-					GetConVarFloat(cVarMinLerp)*1000, GetConVarFloat(cVarMaxLerp)*1000);
+		CPrintToChat(client, "Illegal lerp value (min: {olive}%.01f{default}, max: {olive}%.01f{default})",
+		GetConVarFloat(cVarMinLerp)*1000, GetConVarFloat(cVarMaxLerp)*1000);
 		// nothing else to do
 		return;
 	}
@@ -234,13 +238,14 @@ ProcessPlayerLerp(client) {
 		if (IsMatchLife() || !GetConVarBool(cVarReadyUpLerpChanges)) {
 			new count = GetArrayCell(arrayLerps, index + ARRAY_CHANGES)+1;
 			new max = GetConVarInt(cVarAllowedLerpChanges);
-			PrintToChatAll("\x03%N\x01's lerp changed from \x05%.01f \x01to \x05%.01f\x01 [%s%d\x01/\x04%d \x01changes]", client, currentLerpTime*1000, newLerpTime*1000, ((count > max)?"\x03":"\x04"), count, max);
+			if (IsAnnounce)
+				CPrintToChatAll("{olive}%N{default}'s lerp changed from {blue}%.01f {default}to {blue}%.01f{default} [%s%d{default}/{olive}%d {default}changes]", client, currentLerpTime*1000, newLerpTime*1000, ((count > max)?"{olive}":"{green}"), count, max);
 		
 			if (GetConVarBool(cVarLerpChangeSpec) && (count > max)) {
 				
-				PrintToChatAll("\x03%N \x01was moved to spectators (illegal lerp change)!", client);
+				CPrintToChatAllEx(client, "{teamcolor}%N {default}was moved to spectators ({olive}illegal lerp change{default})!", client);
 				ChangeClientTeam(client, L4D_TEAM_SPECTATE);
-				PrintToChat(client, "Illegal change of the lerp midgame! Change it back to %.01f", currentLerpTime*1000);
+				CPrintToChat(client, "Illegal change of the lerp midgame! Change it back to {olive}%.01f", currentLerpTime*1000);
 				// no lerp update
 				return;
 			}
@@ -249,7 +254,8 @@ ProcessPlayerLerp(client) {
 			SetArrayCell(arrayLerps, index + ARRAY_CHANGES, count);
 		}
 		else {
-			PrintToChatAll("\x03%N\x01's lerp changed from \x05%.01f \x01to \x05%.01f", client, currentLerpTime*1000, newLerpTime*1000);
+			if (IsAnnounce)
+				CPrintToChatAll("{olive}%N{default}'s lerp changed from {blue}%.01f {default}to {blue}%.01f", client, currentLerpTime*1000, newLerpTime*1000);
 		}
 		
 		// update lerp
