@@ -425,9 +425,10 @@ public Action:Ready_Cmd(client, args)
 {
 	if (GetClientTeam(client) == 1)
 	{
-		if (!IsClientCaster(client)) return Plugin_Handled;
+		//if (!IsClientCaster(client))
+    return Plugin_Handled;
 	}
-	
+
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = true;
@@ -443,9 +444,10 @@ public Action:Unready_Cmd(client, args)
 {
 	if (GetClientTeam(client) == 1)
 	{
-		if (!IsClientCaster(client)) return Plugin_Handled;
+		//if (!IsClientCaster(client))
+    return Plugin_Handled;
 	}
-	
+
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = false;
@@ -462,7 +464,7 @@ public Action:ToggleReady_Cmd(client, args)
 	{
 		if (!IsClientCaster(client)) return Plugin_Handled;
 	}
-	
+
 	if (inReadyUp)
 	{
 		isPlayerReady[client] = !isPlayerReady[client];
@@ -659,7 +661,7 @@ UpdatePanel()
 		DrawPanelText(menuPanel, readyFooter[i]);
 	}
 	DrawPanelText(menuPanel, " ");
-	
+
 	new bufLen = strlen(readyBuffer);
 	if (bufLen != 0)
 	{
@@ -737,7 +739,7 @@ InitiateLive(bool:real = true)
 		CloseHandle(Duration);
 		Duration = INVALID_HANDLE;
 	}
-	
+
 	inReadyUp = false;
 	inLiveCountdown = false;
 
@@ -847,15 +849,15 @@ SetTeamFrozen(L4D2Team:team, bool:freezeStatus)
 bool:CheckFullReady()
 {
 	new readyCount = 0;
-	new casterCount = 0;
+	//new casterCount = 0;
 	for (new client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client))
 		{
-			if (IsClientCaster(client))
+			/*if (IsClientCaster(client))
 			{
 				casterCount++;
-			}
+			}*/
 
 			if ((IsPlayer(client) || IsClientCaster(client)) && isPlayerReady[client])
 			{
@@ -863,7 +865,8 @@ bool:CheckFullReady()
 			}
 		}
 	}
-	return readyCount >= GetConVarInt(survivor_limit) + GetConVarInt(z_max_player_zombies) + casterCount;
+	return readyCount >= GetConVarInt(survivor_limit) + GetConVarInt(z_max_player_zombies);
+  //+ casterCount;
 }
 
 InitiateLiveCountdown()
