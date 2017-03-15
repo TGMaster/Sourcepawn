@@ -87,7 +87,7 @@ public Action:OnAbilityUse(Handle:event, const String:name[], bool:dontBroadcast
 
 // Executes through a dummy client, without setting sv_cheats to 1, a console command marked as a cheat
 CheatCommand(String:command[], String:argument1[] = "", String:argument2[] = "") {
-	new anyclient = GetAnyClient()
+	new anyclient = GetAnyClient();
 	if (anyclient == 0)
 	{		
 		anyclient = CreateFakeClient("Bot");
