@@ -30,6 +30,7 @@
 
 new     bool:   g_bReadyUpAvailable     = false;
 new     bool:   g_bIsRoundLive	        = false;
+new		Handle:	g_hOnOff;
 
 
 new const String: g_csSIClassName[][] =
@@ -59,6 +60,7 @@ public OnAllPluginsLoaded()
 {
 	g_bIsRoundLive = false;
 	g_bReadyUpAvailable = LibraryExists("readyup");
+	g_hOnOff = CreateConVar("l4d_announceSI_on", "1", "Display SI class for player when using commands", FCVAR_PLUGIN);
 	RegConsoleCmd("sm_spawns", PrintSpawns);
 	HookEvent("round_end", Event_RoundEnd);
 }
@@ -73,11 +75,13 @@ public OnLibraryAdded(const String:name[])
 
 public OnRoundIsLive()
 {
-    // announce SI classes up now
-    for (new i = 1; i <= MaxClients; i++)
-    	if (IS_SURVIVOR_ALIVE(i))
-    		AnnounceSIClasses(i);
-    g_bIsRoundLive = true;
+	if (GetConVarBool(g_hOnOff)) {
+	    // announce SI classes up now
+	    for (new i = 1; i <= MaxClients; i++)
+	    	if (IS_SURVIVOR_ALIVE(i))
+	    		AnnounceSIClasses(i);
+	    g_bIsRoundLive = true;
+	}
 }
 
 public Action:Event_RoundEnd(Handle:event, String:name[], bool:dontBroadcast) {
@@ -90,6 +94,7 @@ public Action:PrintSpawns(client, args) {
 		PrintToChat(client, "\x01Special infected: \x05Your mom\x01, \x05Your dad\x01.");
 		return;
 	}
+	if (!GetConVarBool(g_hOnOff)) return;
 	AnnounceSIClasses(client);
 }
 
