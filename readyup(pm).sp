@@ -93,6 +93,20 @@ new bool:blockSecretSpam[MAXPLAYERS + 1];
 new iCmd;
 new String:sCmd[32];
 
+// Laser Tag
+new bool:laser_enable;
+new Handle:l4d_laser_life;
+new Handle:l4d_laser_width;
+new Handle:l4d_laser_offset;
+new laser_color[4];
+new g_Sprite;
+new Float:g_LaserOffset;
+new Float:g_LaserWidth;
+new Float:g_LaserLife;
+
+// Timer
+new bootTime;
+
 new String:countdownSound[MAX_SOUNDS][]=
 {
 	"/npc/moustachio/strengthattract01.wav",
@@ -124,8 +138,14 @@ public OnPluginStart()
 	l4d_ready_enable_sound = CreateConVar("l4d_ready_enable_sound", "1", "Enable sound during countdown & on live");
 	l4d_ready_chuckle = CreateConVar("l4d_ready_chuckle", "1", "Enable chuckle during countdown");
 	l4d_ready_live_sound = CreateConVar("l4d_ready_live_sound", "ui/bigreward.wav", "The sound that plays when a round goes live");
+
+	//Laser Tag
+	l4d_laser_life = CreateConVar("l4d_lasertag_life", "1.0", "Seconds Laser will remain", FCVAR_PLUGIN, true, 0.1);
+	l4d_laser_width = CreateConVar("l4d_lasertag_width", "1.0", "Width of Laser", FCVAR_PLUGIN, true, 1.0);
+	l4d_laser_offset = CreateConVar("l4d_lasertag_offset", "36", "Lasertag Offset", FCVAR_PLUGIN);
 	HookConVarChange(l4d_ready_survivor_freeze, SurvFreezeChange);
 
+	HookEvent("bullet_impact", Event_BulletImpact);
 	HookEvent("round_start", RoundStart_Event);
 	HookEvent("player_team", PlayerTeam_Event);
 
@@ -167,6 +187,17 @@ public OnPluginStart()
 #endif
 
 	LoadTranslations("common.phrases");
+
+	HookConVarChange(l4d_laser_life, LaserTag);
+	HookConVarChange(l4d_laser_width, LaserTag);
+	HookConVarChange(l4d_laser_offset, LaserTag);
+
+	bootTime = GetTime();
+}
+
+public LaserTag(Handle:convar, const String:oldValue[], const String:newValue[])
+{
+	OnConfigsExecuted();
 }
 
 public Action:Say_Callback(client, String:command[], argc)
@@ -190,6 +221,10 @@ public OnMapStart()
 	PrecacheSound("buttons/blip2.wav");
 	PrecacheSound("quake/prepare.mp3", false);
 	PrecacheSound(liveSound, false);
+
+	// Laser Tag
+	g_Sprite = PrecacheModel("materials/sprites/laserbeam.vmt");
+	laser_enable = true;
 
 	for (new i = 0; i < MAX_SOUNDS; i++)
 	{
@@ -761,6 +796,22 @@ UpdatePanel()
 	new playerCount = 0;
 	new specCount = 0;
 
+	//Timer
+	//Thanks Dr. McKay
+	new diff = GetTime() - bootTime;
+	new hours = diff / 3600;
+	diff %= 3600;
+	new mins = diff / 60;
+	diff %= 60;
+	new secs = diff;
+	new String:stringTimer[32];
+	if (hours > 0)
+	{
+		Format(stringTimer, 32, "%i:%i:%i", hours, mins, secs);
+	} else {
+		Format(stringTimer, 32, "%i:%i", mins, secs);
+	}
+
 	menuPanel = CreatePanel();
 	
 	new String:ServerBuffer[128];
@@ -776,7 +827,7 @@ UpdatePanel()
 		GetConVarString(FindConVar("hostname"), ServerName, 32);
 	}
 	GetConVarString(l4d_ready_cfg_name, cfgName, 32);
-	Format(ServerBuffer, 128, "▸ Server: %s \n▸ Slots: %d/%d\n▸ Config: %s", ServerName, GetSeriousClientCount(), GetConVarInt(FindConVar("sv_maxplayers")), cfgName);
+	Format(ServerBuffer, 128, "▸ Server: %s\n▸ Config: %s\n▸ Round: %s/2\n▸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
 	DrawPanelText(menuPanel, ServerBuffer);
 	DrawPanelText(menuPanel, " ");
 	DrawPanelText(menuPanel, "♟ Commands ♟");
@@ -809,7 +860,7 @@ UpdatePanel()
 					if (!inLiveCountdown) PrintHintText(client, "You are not ready.\nSay !ready or !r to ready up.");
 					if (fTime - g_fButtonTime[client] > 15.0)
 					{
-						Format(nameBuf, sizeof(nameBuf), "->%d. %s [AFK]\n", ++unreadyCount, nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "->%d. %s [TOILET]\n", ++unreadyCount, nameBuf);
 					}
 					else
 					{
@@ -1128,6 +1179,7 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 		readyDelay--;
 		return Plugin_Continue;
 	}
+	laser_enable = false; //Laser Tag
 	PrintHintTextToAll("Round is live!");
 	InitiateLive(true);
 	readyCountdownTimer = INVALID_HANDLE;
@@ -1183,18 +1235,18 @@ GetRealClientCount()
 	}
 	return clients;
 }
-GetSeriousClientCount()
-{
-	new clients = 0;
-	for (new i = 1; i <= GetMaxClients(); i++)
-	{
-		if (IsClientConnected(i) && !IsFakeClient(i))
-		{
-			clients++;
-		}
-	}
-	return clients;
-}
+// GetSeriousClientCount()
+// {
+// 	new clients = 0;
+// 	for (new i = 1; i <= GetMaxClients(); i++)
+// 	{
+// 		if (IsClientConnected(i) && !IsFakeClient(i))
+// 		{
+// 			clients++;
+// 		}
+// 	}
+// 	return clients;
+// }
 
 stock SetClientFrozen(client, freeze)
 {
@@ -1255,4 +1307,73 @@ MakePropsBreakable()
 			continue;
 		DispatchKeyValueFloat(iEntity, "minhealthdmg", 5.0);
 	}
+}
+
+InSecondHalfOfRound()
+{
+	return GameRules_GetProp("m_bInSecondHalfOfRound");
+}
+
+// Rainbow guns
+public OnConfigsExecuted()
+{
+	g_LaserLife = GetConVarFloat(l4d_laser_life);
+	g_LaserWidth = GetConVarFloat(l4d_laser_width);
+	g_LaserOffset = GetConVarFloat(l4d_laser_offset);
+}
+
+public Action:Event_BulletImpact(Handle:event, const String:name[], bool:dontBroadcast)
+{
+	if(!laser_enable) return Plugin_Continue;
+	
+	// Get Shooter's Userid
+	new userid = GetClientOfUserId(GetEventInt(event, "userid"));
+	// Check if is Survivor
+ 	if(GetClientTeam(userid) != 2) return Plugin_Continue;
+	// Check if is Bot and enabled
+	if(IsFakeClient(userid)) { return Plugin_Continue; }
+
+	laser_color[0] = 0;				//Red
+	laser_color[1] = 125;			//Green
+	laser_color[2] = 255;			//Blue
+	laser_color[3] = 255;			//Alpha
+
+	// Bullet impact location
+	new Float:x = GetEventFloat(event, "x");
+	new Float:y = GetEventFloat(event, "y");
+	new Float:z = GetEventFloat(event, "z");
+	
+	decl Float:startPos[3];
+	startPos[0] = x;
+	startPos[1] = y;
+	startPos[2] = z;
+	
+	/*decl Float:bulletPos[3];
+	bulletPos[0] = x;
+	bulletPos[1] = y;
+	bulletPos[2] = z;*/
+	
+	decl Float:bulletPos[3];
+	bulletPos = startPos;
+	
+	// Current player's EYE position
+	decl Float:playerPos[3];
+	GetClientEyePosition(userid, playerPos);
+	
+	decl Float:lineVector[3];
+	SubtractVectors(playerPos, startPos, lineVector);
+	NormalizeVector(lineVector, lineVector);
+	
+	// Offset
+	ScaleVector(lineVector, g_LaserOffset);
+	// Find starting point to draw line from
+	SubtractVectors(playerPos, lineVector, startPos);
+	
+	// Draw the line
+	TE_SetupBeamPoints(startPos, bulletPos, g_Sprite, 0, 0, 0, g_LaserLife, g_LaserWidth, g_LaserWidth, 1, 0.0, laser_color, 0);
+	
+	TE_SendToAll();
+
+	
+ 	return Plugin_Continue;
 }
