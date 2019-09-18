@@ -100,6 +100,7 @@ new Handle:l4d_laser_width;
 new Handle:l4d_laser_offset;
 new laser_color[4];
 new g_Sprite;
+new laser_bullet[MAXPLAYERS+1];
 new Float:g_LaserOffset;
 new Float:g_LaserWidth;
 new Float:g_LaserLife;
@@ -140,9 +141,9 @@ public OnPluginStart()
 	l4d_ready_live_sound = CreateConVar("l4d_ready_live_sound", "ui/bigreward.wav", "The sound that plays when a round goes live");
 
 	//Laser Tag
-	l4d_laser_life = CreateConVar("l4d_lasertag_life", "1.0", "Seconds Laser will remain", FCVAR_PLUGIN, true, 0.1);
-	l4d_laser_width = CreateConVar("l4d_lasertag_width", "1.0", "Width of Laser", FCVAR_PLUGIN, true, 1.0);
-	l4d_laser_offset = CreateConVar("l4d_lasertag_offset", "36", "Lasertag Offset", FCVAR_PLUGIN);
+	l4d_laser_life = CreateConVar("l4d_ready_laser_life", "1.0", "Seconds Laser will remain", FCVAR_PLUGIN, true, 0.1);
+	l4d_laser_width = CreateConVar("l4d_ready_laser_width", "1.0", "Width of Laser", FCVAR_PLUGIN, true, 1.0);
+	l4d_laser_offset = CreateConVar("l4d_ready_laser_offset", "36", "Lasertag Offset", FCVAR_PLUGIN);
 	HookConVarChange(l4d_ready_survivor_freeze, SurvFreezeChange);
 
 	HookEvent("bullet_impact", Event_BulletImpact);
@@ -224,7 +225,7 @@ public OnMapStart()
 
 	// Laser Tag
 	g_Sprite = PrecacheModel("materials/sprites/laserbeam.vmt");
-	laser_enable = true;
+
 
 	for (new i = 0; i < MAX_SOUNDS; i++)
 	{
@@ -945,12 +946,14 @@ InitiateReadyUp()
 	for (new i = 0; i <= MAXPLAYERS; i++)
 	{
 		isPlayerReady[i] = false;
+        laser_bullet[i] = 0;
 	}
 
 	UpdatePanel();
 	CreateTimer(1.0, MenuRefresh_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(4.0, MenuCmd_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 
+    laser_enable = true;
 	inReadyUp = true;
 	inLiveCountdown = false;
 	readyCountdownTimer = INVALID_HANDLE;
@@ -1026,6 +1029,7 @@ PrintCmd()
 
 InitiateLive(bool:real = true)
 {
+    laser_enable = false; //Laser Tag
 	inReadyUp = false;
 	inLiveCountdown = false;
 
@@ -1179,7 +1183,6 @@ public Action:ReadyCountdownDelay_Timer(Handle:timer)
 		readyDelay--;
 		return Plugin_Continue;
 	}
-	laser_enable = false; //Laser Tag
 	PrintHintTextToAll("Round is live!");
 	InitiateLive(true);
 	readyCountdownTimer = INVALID_HANDLE;
@@ -1333,9 +1336,53 @@ public Action:Event_BulletImpact(Handle:event, const String:name[], bool:dontBro
 	// Check if is Bot and enabled
 	if(IsFakeClient(userid)) { return Plugin_Continue; }
 
-	laser_color[0] = 0;				//Red
-	laser_color[1] = 125;			//Green
-	laser_color[2] = 255;			//Blue
+    //Color
+    switch(laser_bullet[userid]) {
+        case 0:
+        {
+            laser_color[0] = 148;			//Red
+            laser_color[1] = 0;			    //Green
+            laser_color[2] = 211;			//Blue
+        }
+        case 1:
+        {
+            laser_color[0] = 75;
+            laser_color[1] = 0;
+            laser_color[2] = 130;
+        }
+        case 2:
+        {
+            laser_color[0] = 0;
+            laser_color[1] = 0;
+            laser_color[2] = 255;
+        }
+        case 3:
+        {
+            laser_color[0] = 0;
+            laser_color[1] = 255;
+            laser_color[2] = 0;
+        }
+        case 4:
+        {
+            laser_color[0] = 255;			
+            laser_color[1] = 255;
+            laser_color[2] = 0;
+        }
+        case 5:
+        {
+            laser_color[0] = 255;
+            laser_color[1] = 127;
+            laser_color[2] = 0;
+        }
+        default:
+        {
+            laser_color[0] = 255;
+            laser_color[1] = 0;
+            laser_color[2] = 0;
+        }
+    }
+
+    laser_bullet[userid] = (laser_bullet[userid] < 6) ? laser_bullet[userid]+1 : 0;
 	laser_color[3] = 255;			//Alpha
 
 	// Bullet impact location
