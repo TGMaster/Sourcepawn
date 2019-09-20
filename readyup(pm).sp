@@ -787,12 +787,10 @@ UpdatePanel()
 		menuPanel = INVALID_HANDLE;
 	}
 
-	new String:readyBuffer[800] = "";
-	new String:unreadyBuffer[800] = "";
+	new String:survivorBuffer[800] = "";
+	new String:infectedBuffer[800] = "";
 	new String:casterBuffer[500];
 	new String:specBuffer[500];
-	new readyCount = 0;
-	new unreadyCount = 0;
 	new casterCount;
 	new playerCount = 0;
 	new specCount = 0;
@@ -808,9 +806,9 @@ UpdatePanel()
 	new String:stringTimer[32];
 	if (hours > 0)
 	{
-		Format(stringTimer, 32, "%i:%i:%i", hours, mins, secs);
+		Format(stringTimer, 32, "%02d:%02d:%02d", hours, mins, secs);
 	} else {
-		Format(stringTimer, 32, "%i:%i", mins, secs);
+		Format(stringTimer, 32, "%02d:%02d", mins, secs);
 	}
 
 	menuPanel = CreatePanel();
@@ -831,9 +829,6 @@ UpdatePanel()
 	Format(ServerBuffer, 128, "▸ Server: %s\n▸ Config: %s\n▸ Round: %s/2\n▸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
 	DrawPanelText(menuPanel, ServerBuffer);
 	DrawPanelText(menuPanel, " ");
-	DrawPanelText(menuPanel, "♟ Commands ♟");
-	DrawPanelText(menuPanel, sCmd);
-	DrawPanelText(menuPanel, " ");
 
 	decl String:nameBuf[MAX_NAME_LENGTH*2];
 	decl String:authBuffer[64];
@@ -853,26 +848,28 @@ UpdatePanel()
 				if (isPlayerReady[client])
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are ready.\nSay !unready or !nr to unready.");
-					Format(nameBuf, sizeof(nameBuf), "->%d. %s\n", ++readyCount, nameBuf);
-					StrCat(readyBuffer, sizeof(readyBuffer), nameBuf);
+					Format(nameBuf, sizeof(nameBuf), "♞ %s\n", nameBuf);
 				}
 				else
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are not ready.\nSay !ready or !r to ready up.");
 					if (fTime - g_fButtonTime[client] > 15.0)
 					{
-						Format(nameBuf, sizeof(nameBuf), "->%d. %s [TOILET]\n", ++unreadyCount, nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "♘ %s [Toilet]\n", nameBuf);
 					}
 					else
 					{
-						Format(nameBuf, sizeof(nameBuf), "->%d. %s\n", ++unreadyCount, nameBuf);
-					}
-					StrCat(unreadyBuffer, 800, nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "♘ %s\n", nameBuf);
+					}			
 				}
+
+				if (L4D2Team:GetClientTeam(client) == L4D2Team_Survivor) StrCat(survivorBuffer, sizeof(survivorBuffer), nameBuf);
+				else if (L4D2Team:GetClientTeam(client) == L4D2Team_Infected) StrCat(infectedBuffer, sizeof(infectedBuffer), nameBuf);
 			}
 			else if (caster)
 			{
-				Format(nameBuf, 64, "->%d. %s\n", ++casterCount, nameBuf);
+				++casterCount;
+				Format(nameBuf, 64, "%s\n", nameBuf);
 				StrCat(casterBuffer, sizeof(casterBuffer), nameBuf);
 			}
 			else
@@ -880,38 +877,38 @@ UpdatePanel()
 				++specCount;
 				if (playerCount <= GetConVarInt(l4d_ready_max_players))
 				{
-					Format(nameBuf, sizeof(nameBuf), "->%d. %s\n", specCount, nameBuf);
+					Format(nameBuf, sizeof(nameBuf), "%s\n", nameBuf);
 					StrCat(specBuffer, sizeof(specBuffer), nameBuf);
 				}
 			}
 		}
 	}
 
-	new bufLen = strlen(readyBuffer);
+	new bufLen = strlen(survivorBuffer);
 	if (bufLen != 0)
 	{
-		readyBuffer[bufLen] = '\0';
-		ReplaceString(readyBuffer, sizeof(readyBuffer), "#buy", "<- TROLL");
-		ReplaceString(readyBuffer, sizeof(readyBuffer), "#", "_");
-		DrawPanelText(menuPanel, "READY");
-		DrawPanelText(menuPanel, readyBuffer);
+		survivorBuffer[bufLen] = '\0';
+		ReplaceString(survivorBuffer, sizeof(survivorBuffer), "#buy", "<- TROLL");
+		ReplaceString(survivorBuffer, sizeof(survivorBuffer), "#", "_");
+		DrawPanelText(menuPanel, "->1. Survivors");
+		DrawPanelText(menuPanel, survivorBuffer);
 	}
 
-	bufLen = strlen(unreadyBuffer);
+	bufLen = strlen(infectedBuffer);
 	if (bufLen != 0)
 	{
-		unreadyBuffer[bufLen] = '\0';
-		ReplaceString(unreadyBuffer, sizeof(unreadyBuffer), "#buy", "<- TROLL");
-		ReplaceString(unreadyBuffer, sizeof(unreadyBuffer), "#", "_");
-		DrawPanelText(menuPanel, "UNREADY");
-		DrawPanelText(menuPanel, unreadyBuffer);
+		infectedBuffer[bufLen] = '\0';
+		ReplaceString(infectedBuffer, sizeof(infectedBuffer), "#buy", "<- TROLL");
+		ReplaceString(infectedBuffer, sizeof(infectedBuffer), "#", "_");
+		DrawPanelText(menuPanel, "->2. Infected");
+		DrawPanelText(menuPanel, infectedBuffer);
 	}
 	
 	bufLen = strlen(casterBuffer);		
 	if (bufLen)		
 	{		
 		casterBuffer[bufLen] = '\0';		
-		DrawPanelText(menuPanel, "CASTERS");		
+		DrawPanelText(menuPanel, "->3. Casters");		
 		ReplaceString(casterBuffer, sizeof(casterBuffer), "#", "_", true);		
 		DrawPanelText(menuPanel, casterBuffer);		
 	}
@@ -920,12 +917,17 @@ UpdatePanel()
 	if (bufLen != 0)
 	{
 		specBuffer[bufLen] = '\0';
-		DrawPanelText(menuPanel, "SPECTATORS");
+		if (casterCount == 0) DrawPanelText(menuPanel, "->3. Spectators");
+		else DrawPanelText(menuPanel, "->4. Spectators");
 		ReplaceString(specBuffer, sizeof(specBuffer), "#", "_");
 		if (playerCount > GetConVarInt(l4d_ready_max_players))
-			FormatEx(specBuffer, sizeof(specBuffer), "->1. Many (%d)", specCount);
+			FormatEx(specBuffer, sizeof(specBuffer), "Many (%d)", specCount);
 		DrawPanelText(menuPanel, specBuffer);
 	}
+
+	DrawPanelText(menuPanel, " ");
+	DrawPanelText(menuPanel, "⌘ Commands ⌘");
+	DrawPanelText(menuPanel, sCmd);
 
 	for (new i = 0; i < MAX_FOOTERS; i++)
 	{
@@ -946,14 +948,14 @@ InitiateReadyUp()
 	for (new i = 0; i <= MAXPLAYERS; i++)
 	{
 		isPlayerReady[i] = false;
-        laser_bullet[i] = 0;
+		laser_bullet[i] = 0;
 	}
 
 	UpdatePanel();
 	CreateTimer(1.0, MenuRefresh_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(4.0, MenuCmd_Timer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-
-    laser_enable = true;
+	
+	laser_enable = true;
 	inReadyUp = true;
 	inLiveCountdown = false;
 	readyCountdownTimer = INVALID_HANDLE;
@@ -1018,7 +1020,7 @@ PrintCmd()
 		}
 		case 9:
 		{
-			Format(sCmd, sizeof(sCmd), "->8. !flip / !mix");
+			Format(sCmd, sizeof(sCmd), "->9. !flip / !mix");
 		}
 		default:
 		{
@@ -1029,7 +1031,7 @@ PrintCmd()
 
 InitiateLive(bool:real = true)
 {
-    laser_enable = false; //Laser Tag
+	laser_enable = false; //Laser Tag
 	inReadyUp = false;
 	inLiveCountdown = false;
 
@@ -1337,12 +1339,12 @@ public Action:Event_BulletImpact(Handle:event, const String:name[], bool:dontBro
 	if(IsFakeClient(userid)) { return Plugin_Continue; }
 
     //Color
-    switch(laser_bullet[userid]) {
+	switch(laser_bullet[userid]) {
         case 0:
         {
-            laser_color[0] = 148;			//Red
-            laser_color[1] = 0;			    //Green
-            laser_color[2] = 211;			//Blue
+            laser_color[0] = 255;			//Red
+            laser_color[1] = 255;			//Green
+            laser_color[2] = 255;			//Blue
         }
         case 1:
         {
@@ -1382,8 +1384,8 @@ public Action:Event_BulletImpact(Handle:event, const String:name[], bool:dontBro
         }
     }
 
-    laser_bullet[userid] = (laser_bullet[userid] < 6) ? laser_bullet[userid]+1 : 0;
-	laser_color[3] = 255;			//Alpha
+	laser_bullet[userid] = (laser_bullet[userid] < 6) ? laser_bullet[userid]+1 : 0;
+	laser_color[3] = 255; //Alpha
 
 	// Bullet impact location
 	new Float:x = GetEventFloat(event, "x");
