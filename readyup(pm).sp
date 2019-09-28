@@ -828,7 +828,7 @@ UpdatePanel()
 		GetConVarString(FindConVar("hostname"), ServerName, 32);
 	}
 	GetConVarString(l4d_ready_cfg_name, cfgName, 32);
-	Format(ServerBuffer, 128, "â–¸ Server: %s\nâ–¸ Config: %s\nâ–¸ Round: %s/2\nâ–¸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
+	Format(ServerBuffer, 128, "▸ Server: %s\n▸ Config: %s\n▸ Round: %s/2\n▸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
 	DrawPanelText(menuPanel, ServerBuffer);
 	DrawPanelText(menuPanel, " ");
 
@@ -850,18 +850,18 @@ UpdatePanel()
 				if (isPlayerReady[client])
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are ready.\nSay !unready or !nr to unready.");
-					Format(nameBuf, sizeof(nameBuf), "â™ž %s\n", nameBuf);
+					Format(nameBuf, sizeof(nameBuf), "♞ %s\n", nameBuf);
 				}
 				else
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are not ready.\nSay !ready or !r to ready up.");
 					if (fTime - g_fButtonTime[client] > 15.0)
 					{
-						Format(nameBuf, sizeof(nameBuf), "â™˜ %s [Toilet]\n", nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "♘ %s [Toilet]\n", nameBuf);
 					}
 					else
 					{
-						Format(nameBuf, sizeof(nameBuf), "â™˜ %s\n", nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "♘ %s\n", nameBuf);
 					}			
 				}
 
@@ -928,7 +928,7 @@ UpdatePanel()
 	}
 
 	DrawPanelText(menuPanel, " ");
-	DrawPanelText(menuPanel, "âŒ˜ Commands âŒ˜");
+	DrawPanelText(menuPanel, "⌘ Commands ⌘");
 	DrawPanelText(menuPanel, sCmd);
 
 	for (new i = 0; i < MAX_FOOTERS; i++)
