@@ -141,7 +141,7 @@ public OnPluginStart()
 	l4d_ready_live_sound = CreateConVar("l4d_ready_live_sound", "ui/bigreward.wav", "The sound that plays when a round goes live");
 
 	//Laser Tag
-	l4d_laser_life = CreateConVar("l4d_ready_laser_life", "1.0", "Seconds Laser will remain", FCVAR_PLUGIN, true, 0.1);
+	l4d_laser_life = CreateConVar("l4d_ready_laser_life", "1.5", "Seconds Laser will remain", FCVAR_PLUGIN, true, 0.1);
 	l4d_laser_width = CreateConVar("l4d_ready_laser_width", "1.0", "Width of Laser", FCVAR_PLUGIN, true, 1.0);
 	l4d_laser_offset = CreateConVar("l4d_ready_laser_offset", "36", "Lasertag Offset", FCVAR_PLUGIN);
 	HookConVarChange(l4d_ready_survivor_freeze, SurvFreezeChange);
@@ -226,10 +226,12 @@ public OnMapStart()
 	// Laser Tag
 	g_Sprite = PrecacheModel("materials/sprites/laserbeam.vmt");
 
-
-	for (new i = 0; i < MAX_SOUNDS; i++)
+	if (GetConVarBool(l4d_ready_chuckle))
 	{
-		PrecacheSound(countdownSound[i]);
+		for (new i = 0; i < MAX_SOUNDS; i++)
+		{
+			PrecacheSound(countdownSound[i]);
+		}
 	}
 	for (new client = 1; client <= MAXPLAYERS; client++)
 	{
@@ -826,7 +828,7 @@ UpdatePanel()
 		GetConVarString(FindConVar("hostname"), ServerName, 32);
 	}
 	GetConVarString(l4d_ready_cfg_name, cfgName, 32);
-	Format(ServerBuffer, 128, "▸ Server: %s\n▸ Config: %s\n▸ Round: %s/2\n▸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
+	Format(ServerBuffer, 128, "â–¸ Server: %s\nâ–¸ Config: %s\nâ–¸ Round: %s/2\nâ–¸ Time played: %s", ServerName, cfgName, (InSecondHalfOfRound() ? "2" : "1"), stringTimer);
 	DrawPanelText(menuPanel, ServerBuffer);
 	DrawPanelText(menuPanel, " ");
 
@@ -848,18 +850,18 @@ UpdatePanel()
 				if (isPlayerReady[client])
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are ready.\nSay !unready or !nr to unready.");
-					Format(nameBuf, sizeof(nameBuf), "♞ %s\n", nameBuf);
+					Format(nameBuf, sizeof(nameBuf), "â™ž %s\n", nameBuf);
 				}
 				else
 				{
 					if (!inLiveCountdown) PrintHintText(client, "You are not ready.\nSay !ready or !r to ready up.");
 					if (fTime - g_fButtonTime[client] > 15.0)
 					{
-						Format(nameBuf, sizeof(nameBuf), "♘ %s [Toilet]\n", nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "â™˜ %s [Toilet]\n", nameBuf);
 					}
 					else
 					{
-						Format(nameBuf, sizeof(nameBuf), "♘ %s\n", nameBuf);
+						Format(nameBuf, sizeof(nameBuf), "â™˜ %s\n", nameBuf);
 					}			
 				}
 
@@ -926,7 +928,7 @@ UpdatePanel()
 	}
 
 	DrawPanelText(menuPanel, " ");
-	DrawPanelText(menuPanel, "⌘ Commands ⌘");
+	DrawPanelText(menuPanel, "âŒ˜ Commands âŒ˜");
 	DrawPanelText(menuPanel, sCmd);
 
 	for (new i = 0; i < MAX_FOOTERS; i++)
